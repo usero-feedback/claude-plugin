@@ -11,7 +11,19 @@ allowed-tools: Bash
 
 # Usero
 
-Usero turns user feedback into shipped code. This skill gives you two ways in:
+Usero turns user feedback into shipped code.
+
+**No API key yet?** Do not send the user to a signup page. If the `usero` MCP server is connected but every tool answers 401, or
+the only tools you see are `start_signup` and `check_signup`, run the signup from here: ask for the user's email, call
+`start_signup(email, clientName: "Claude Code")`, tell the user to open the link in their inbox and press "Yes, connect Claude
+Code" on the page, and poll `check_signup(pollToken)` every few seconds without ending your turn. It returns the API key once.
+Save it straight away: run `claude mcp remove usero` (Claude Code will not overwrite a server name in place), then
+`claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer <key>"` (same scope the server was
+added with) and export `USERO_API_KEY` for the scripts. Then `create_client(name, repo?)` for their product and
+`connect_github(clientId)` for the install URL; poll `check_github(clientId)` until it lands. If the server is not connected at
+all, add it first with `claude mcp add --transport http usero https://usero.io/mcp` (no header) and start from `start_signup`.
+
+This skill gives you two ways in:
 
 1. **MCP tools** (preferred). If the `usero` MCP server is connected you have tools named `list_clients`, `search_feedback` and so
    on. Use them. They return structured JSON, are scoped to the user's clients, and need no shell.
@@ -23,12 +35,13 @@ Usero turns user feedback into shipped code. This skill gives you two ways in:
 How to tell which you have: look at your tool list for `list_clients` or `search_feedback`. Present means MCP. Absent means REST.
 Do not run `claude mcp` commands to find out.
 
-Some actions exist only on REST (creating a client, importing a GitHub issue, creating or editing forms, form analytics). For
-those, use the scripts even when MCP is connected.
+Some actions exist only on REST (importing a GitHub issue, creating or editing forms, form analytics). For those, use the scripts
+even when MCP is connected.
 
 ## Setup the user needs once
 
-- API key: https://usero.io/profile, under API keys. Keys look like `usk_live_...` and are shown once.
+- API key: `start_signup` from the agent (above), or https://usero.io/profile under API keys. Keys look like `usk_live_...` and
+  are shown once.
 - MCP path: install the plugin (`/plugin marketplace add usero-feedback/claude-plugin`, then `/plugin install usero@usero`) with
   `USERO_API_KEY` exported in the shell, or
   `claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer usk_live_..."`.
@@ -41,7 +54,12 @@ Always start with `list_clients` unless the user has already given you a client 
 
 | Tool                  | Use it when                                                                                                                                                                                                                                                                                                                                              |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `list_clients`        | You need a client id, or the user asks which projects are on Usero. Returns id, name, environments, feedback counts.                                                                                                                                                                                                                                     |
+| `start_signup`        | No key. Args: `email`, `clientName` ("Claude Code"). Emails a confirm page link, returns `pollToken`. Tell the user to open it and press the confirm button.                                                                                                                                                                                             |
+| `check_signup`        | No key. Arg: `pollToken`. `pending` until the user confirms, then `ready` with `apiKey` once. Save the key immediately; the token is dead after.                                                                                                                                                                                                         |
+| `create_client`       | The user has no client yet, or wants one for a new product. Args: `name`, optional `repo` (only if the GitHub App already reaches it; otherwise skip and use `connect_github`).                                                                                                                                                                          |
+| `connect_github`      | The client has no GitHub connection. Returns the install URL for the user to open. After the install, call again with `repo` if the installation covers several repositories.                                                                                                                                                                            |
+| `check_github`        | Polling after the user opened the install URL. `pending` until it lands, then `connected` with `repo` and `repos`.                                                                                                                                                                                                                                       |
+| `list_clients`        | You need a client id, or the user asks which projects are on Usero. Returns a page (25 by default) of id, name, environments, open feedback count, plus `totalCount` and `hasMore`. Many clients: pass `nameContains` to narrow, or `offset: nextOffset` for the next page.                                                                              |
 | `search_feedback`     | "What are users saying about X", "recent feedback", "what did we resolve this week". Args: `clientId`, plus optional `query`, `status`, `source`, `environment`, `since` (created), `resolvedSince` (resolved), `sort` (newest, oldest, severity), `hasScreenshot`, `limit` (max 50). Defaults to open items, newest first. Bodies are cut at 400 chars. |
 | `get_feedback`        | You have one feedback id and need the full item: comment, quotes, person, screenshots, replay link, clusters, pull requests.                                                                                                                                                                                                                             |
 | `list_clusters`       | "What are the biggest complaints", "what should we fix first", triage. Args: `clientId`, optional `includeAddressed`, `limit`. Biggest first, each with up to three sample verbatim quotes, so a top-3 summary needs no further calls.                                                                                                                   |
@@ -71,6 +89,9 @@ rather than you.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`.
 
+**"Set me up with Usero."** `start_signup`, wait for the click via `check_signup`, save the key, `create_client`, then
+`connect_github` and `check_github`. End by telling the user which client was created and whether GitHub is connected.
+
 ## REST scripts (fallback, and REST-only actions)
 
 Base URL `https://usero.io/api/v1`, auth `Authorization: Bearer $USERO_API_KEY`. Set `USERO_API_BASE_URL` to point at another
@@ -78,7 +99,7 @@ deployment. Every script prints JSON on success and `Error (<code>)` plus the bo
 
 | Script                                                     | Does                                                                                                    | MCP equivalent        |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------- |
-| `create-client.sh "Name" [owner/repo]`                     | Creates a client. Repo is optional and only for PR generation; see the note below.                      | none (REST only)      |
+| `create-client.sh "Name" [owner/repo]`                     | Creates a client. Repo is optional and only for PR generation; see the note below.                      | `create_client`       |
 | `import-issue.sh <clientId> <issueUrl>`                    | Imports a GitHub issue as feedback. URL must match the client's repo. Idempotent. Returns `feedbackId`. | none (REST only)      |
 | `create-pr.sh <clientId> <feedbackId> [guidance]`          | Asks Usero to open an AI PR. Returns `prId`. Asynchronous.                                              | `request_ai_pr`       |
 | `check-status.sh <clientId> <prId>`                        | PR status. Terminal: `created`, `failed`, `blocked`.                                                    | `get_pr_status`       |
@@ -141,7 +162,8 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 
 ## Rules
 
-- Never print an API key. Scripts read it from the environment; the MCP header is set by the plugin config.
+- Never print an API key, except that the key `check_signup` returns must be written into the MCP config and `USERO_API_KEY` right
+  away (that is the one place it exists). Scripts read it from the environment; the MCP header is set by the plugin config.
 - `request_ai_pr`, `create-pr.sh`, `delete-form.sh` and `full-workflow.sh` have side effects on the user's repo or data. Say what
   you are about to do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
