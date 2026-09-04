@@ -1,0 +1,13 @@
+{
+  "name": "usero",
+  "version": "0.1.0",
+  "description": "Read your Usero feedback inbox and clusters, file feedback, and open AI pull requests from Claude Code. Bundles the usero MCP server config and a skill that knows when to reach for it.",
+  "author": {
+    "name": "Usero",
+    "url": "https://usero.io"
+  },
+  "homepage": "https://usero.io/docs/mcp",
+  "repository": "https://github.com/usero-feedback/claude-plugin",
+  "license": "MIT",
+  "keywords": ["usero", "feedback", "user-feedback", "mcp", "pull-request", "clusters"]
+}

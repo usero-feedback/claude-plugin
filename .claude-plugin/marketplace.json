@@ -1,0 +1,26 @@
+{
+  "name": "usero",
+  "owner": {
+    "name": "Usero",
+    "url": "https://usero.io"
+  },
+  "metadata": {
+    "description": "Claude Code plugins from Usero: user feedback, clusters and AI pull requests from inside the agent.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "usero",
+      "source": "./plugins/usero",
+      "description": "Read your Usero feedback inbox and clusters, file feedback, and open AI pull requests from Claude Code.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Usero",
+        "url": "https://usero.io"
+      },
+      "homepage": "https://usero.io/docs/mcp",
+      "category": "productivity",
+      "tags": ["feedback", "user-feedback", "mcp", "pull-request"]
+    }
+  ]
+}
