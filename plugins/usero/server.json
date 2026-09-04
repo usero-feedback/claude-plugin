@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.usero/usero",
+  "title": "Usero",
+  "description": "Read your Usero feedback inbox and clusters, file feedback, and have Usero open an AI pull request.",
+  "version": "1.1.0",
+  "websiteUrl": "https://usero.io/docs/mcp",
+  "repository": {
+    "url": "https://github.com/usero-feedback/claude-plugin",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://usero.io/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <Usero API key>. Create one under API keys on https://usero.io/profile; the value must read exactly: Bearer usk_live_...",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
