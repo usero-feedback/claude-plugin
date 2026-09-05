@@ -11,6 +11,8 @@ Setup, the tool list and config for other MCP clients (Cursor, Claude Desktop, W
 
 The plugin's own README with install details lives at [`plugins/usero/README.md`](plugins/usero/README.md).
 
+Root `.mcp.json` and `skills/` are copies for Open Plugins compatible scanners; the canonical plugin is `plugins/usero`.
+
 ## This repo is a mirror
 
 This repository is a one-way mirror of the private Usero source. Every push to the source syncs `plugins/usero/` and
