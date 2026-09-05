@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "usero": {
+      "type": "http",
+      "url": "${USERO_MCP_URL:-https://usero.io/mcp}",
+      "headers": {
+        "Authorization": "Bearer ${USERO_API_KEY}"
+      }
+    }
+  }
+}

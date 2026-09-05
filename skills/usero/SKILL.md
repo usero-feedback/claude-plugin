@@ -1,0 +1,180 @@
+---
+name: usero
+description:
+  Work with Usero, the user feedback tool, from inside the agent. Use whenever the user mentions Usero, asks what users are saying
+  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants to build or edit
+  a survey or feedback form and get its public link, or wants Usero to open or check an AI pull request for a feedback item (Usero
+  writes the PR server-side). The MCP server tools cover all of that; the bundled REST scripts additionally import GitHub issues
+  and read form analytics, and are the fallback when no MCP server is connected.
+allowed-tools: Bash
+---
+
+# Usero
+
+Usero turns user feedback into shipped code.
+
+**No API key yet?** Do not send the user to a signup page. If the `usero` MCP server is connected but every tool answers 401, or
+the only tools you see are `start_signup` and `check_signup`, run the signup from here: ask for the user's email, call
+`start_signup(email, clientName: "Claude Code")`, tell the user Usero has emailed them (subject "Connect Claude Code to Usero")
+and to press the button in it, then "Yes, connect Claude Code" on the page, and poll `check_signup(pollToken)` every 5 seconds
+without ending your turn. It returns the API key once. Save it straight away: add `export USERO_API_KEY=<key>` to their shell
+profile, then, only if `claude mcp list` already shows a `usero` server, `claude mcp remove usero` (Claude Code will not overwrite
+a server name in place), then
+`claude mcp add --transport http usero https://usero.io/mcp --header 'Authorization: Bearer ${USERO_API_KEY}'` (single quotes,
+same scope the server was added with). Then `create_client(name, repo?)` for their product and `connect_github(clientId)` for the
+install URL; poll `check_github(clientId)` until it lands. If the server is not connected at all, add it first with
+`claude mcp add --transport http usero https://usero.io/mcp` (no header) and start from `start_signup`.
+
+This skill gives you two ways in:
+
+1. **MCP tools** (preferred). If the `usero` MCP server is connected you have tools named `list_clients`, `search_feedback` and so
+   on. Use them. They return structured JSON, are scoped to the user's clients, and need no shell.
+2. **REST scripts** (fallback). If no `usero` MCP tools are available, run the shell scripts in the `scripts/` directory next to
+   this file. When loaded as a plugin that directory is `${CLAUDE_PLUGIN_ROOT}/skills/usero/scripts/`; when loaded from
+   `~/.claude/skills/usero/` it is `~/.claude/skills/usero/scripts/`. Every script needs `USERO_API_KEY` in the environment (or in
+   `~/.zshrc`).
+
+How to tell which you have: look at your tool list for `list_clients` or `search_feedback`. Present means MCP. Absent means REST.
+Do not run `claude mcp` commands to find out.
+
+Two actions exist only on REST (importing a GitHub issue, form analytics). For those, use the scripts even when MCP is connected.
+Forms are MCP-first: `create_form`, `get_form`, `update_form` and `delete_form` take typed fields and return the public link, so
+never fall back to `create-form.sh` or `update-form.sh` while those tools are present, and never read Usero's source to find the
+field shape; the tool schema is the documentation.
+
+## Setup the user needs once
+
+- API key: `start_signup` from the agent (above), or https://usero.io/profile under API keys. Keys look like `usk_live_...` and
+  are shown once.
+- MCP path: install the plugin (`/plugin marketplace add usero-feedback/claude-plugin`, then `/plugin install usero@usero`) with
+  `USERO_API_KEY` exported in the shell, or
+  `claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer usk_live_..."`.
+- REST path: `export USERO_API_KEY="usk_live_..."` in `~/.zshrc`.
+- Docs: https://usero.io/docs/mcp (MCP) and https://usero.io/docs/api (REST).
+
+## MCP tools, and when to reach for each
+
+Always start with `list_clients` unless the user has already given you a client id (ids start with `client_`).
+
+| Tool                  | Use it when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start_signup`        | No key. Args: `email`, `clientName` ("Claude Code"). Emails a confirm page link, returns `pollToken`. Tell the user to open it and press the confirm button.                                                                                                                                                                                                                                                                                                                                                    |
+| `check_signup`        | No key. Arg: `pollToken`. `pending` until the user confirms, then `ready` with `apiKey` once. Save the key immediately; the token is dead after.                                                                                                                                                                                                                                                                                                                                                                |
+| `create_client`       | The user has no client yet, or wants one for a new product. Args: `name`, optional `repo` (only if the GitHub App already reaches it; otherwise skip and use `connect_github`).                                                                                                                                                                                                                                                                                                                                 |
+| `connect_github`      | The client has no GitHub connection. Returns the install URL for the user to open. After the install, call again with `repo` if the installation covers several repositories.                                                                                                                                                                                                                                                                                                                                   |
+| `check_github`        | Polling after the user opened the install URL. `pending` until it lands, then `connected` with `repo` and `repos`.                                                                                                                                                                                                                                                                                                                                                                                              |
+| `list_clients`        | You need a client id, or the user asks which projects are on Usero. Returns a page (25 by default) of id, name, environments, open feedback count, plus `totalCount` and `hasMore`. Many clients: pass `nameContains` to narrow, or `offset: nextOffset` for the next page.                                                                                                                                                                                                                                     |
+| `search_feedback`     | "What are users saying about X", "recent feedback", "what did we resolve this week". Args: `clientId`, plus optional `query`, `status`, `source`, `environment`, `since` (created), `resolvedSince` (resolved), `sort` (newest, oldest, severity), `hasScreenshot`, `limit` (max 50). Defaults to open items, newest first. Bodies are cut at 400 chars.                                                                                                                                                        |
+| `get_feedback`        | You have one feedback id and need the full item: comment, quotes, person, screenshots, replay link, clusters, pull requests.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `list_clusters`       | "What are the biggest complaints", "what should we fix first", triage. Args: `clientId`, optional `includeAddressed`, `limit`. Biggest first, each with up to three sample verbatim quotes, so a top-3 summary needs no further calls.                                                                                                                                                                                                                                                                          |
+| `get_cluster`         | Drill into one cluster: members (default 50, `memberLimit` up to 200) with verbatim quotes and senders, plus its PR if one exists.                                                                                                                                                                                                                                                                                                                                                                              |
+| `create_feedback`     | The user wants to log something into Usero ("file this as feedback", "add this bug to the inbox"). Args: `clientId`, `title`, `body`, optional `environment`, `pageUrl`, `userEmail`. Source is recorded as `mcp`.                                                                                                                                                                                                                                                                                              |
+| `get_pr_status`       | Checking on an AI pull request for a feedback item. Returns status, URL, progress.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `request_ai_pr`       | The user asks Usero to open an AI pull request for a feedback item. Usero's agent writes and opens it server-side; you do not need the repo checked out, no git or gh. Needs GitHub connected on the client. Optional `guidance` steers the fix. Capped at 5 per key per day. Confirm with the user before calling; it opens a PR on their repo.                                                                                                                                                                |
+| `list_forms`          | The user asks about surveys or hosted forms for a client.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `list_form_responses` | Reading answers to one form. Args: `clientId`, `formId`, optional `page`, `limit` (max 50).                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `get_form`            | You need one form in full (fields with ids, settings, public URL, response count), always before `update_form`.                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `create_form`         | "Build me an NPS survey", "make a bug report form". Args: `clientId`, `title`, `fields` (typed list: text, textarea, email, number, select, radio, multiselect, checkbox, rating, scale; choice types take `options`, scale takes `min`/`max`/`minLabel`/`maxLabel`), optional `description`, `settings` (`surveyMetric: "nps"` with a 0 to 10 scale, `"csat"` with a rating, `"ces"` with a 1 to 7 scale), `published`. Returns `publicUrl` to hand the user. The tool description carries a full NPS example. |
+| `update_form`         | Changing a form. Only passed args change. `fields` replaces the whole list: `get_form` first, edit, send back whole, keep ids so old responses stay attached. `published: false` closes it.                                                                                                                                                                                                                                                                                                                     |
+| `delete_form`         | Removing a form and all its responses. Irreversible; confirm with the user first. Prefer `update_form` with `published: false` to pause.                                                                                                                                                                                                                                                                                                                                                                        |
+
+The `environment` argument is the environment name sent from the widget. Omit it to search every environment. The literal `no-env`
+means feedback sent without one.
+
+Resources you can pin instead of calling a tool: `usero://clients/{clientId}/clusters` and `usero://feedback/{id}`.
+
+Prompt templates the server provides (`clientId` optional; omitted means the key's only client, or pick one via `list_clients`):
+`triage_inbox`, `fix_top_complaint`, `write_changelog_from_feedback`.
+
+### Typical MCP flows
+
+**"What are users complaining about?"** `list_clients` if needed, then `list_clusters`, then `get_cluster` on the top one or two.
+Quote users verbatim, name the cluster size, and say what you would fix first and why.
+
+**"Fix the top complaint."** `list_clusters`, `get_cluster`, then find the cause in the current repo and fix it yourself.
+Reference the feedback ids and a quote in the commit or PR body. Only call `request_ai_pr` if the user asks Usero to open the PR
+rather than you.
+
+**"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`.
+
+**"Create an NPS survey and give me the link."** `list_clients` if needed, then `create_form` with a `scale` field (min 0, max 10,
+end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
+
+**"Set me up with Usero."** `start_signup`, wait for the click via `check_signup`, save the key, `create_client`, then
+`connect_github` and `check_github`. End by telling the user which client was created and whether GitHub is connected.
+
+## REST scripts (fallback, and REST-only actions)
+
+Base URL `https://usero.io/api/v1`, auth `Authorization: Bearer $USERO_API_KEY`. Set `USERO_API_BASE_URL` to point at another
+deployment. Every script prints JSON on success and `Error (<code>)` plus the body on failure.
+
+| Script                                                     | Does                                                                                                    | MCP equivalent        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------- |
+| `create-client.sh "Name" [owner/repo]`                     | Creates a client. Repo is optional and only for PR generation; see the note below.                      | `create_client`       |
+| `import-issue.sh <clientId> <issueUrl>`                    | Imports a GitHub issue as feedback. URL must match the client's repo. Idempotent. Returns `feedbackId`. | none (REST only)      |
+| `create-pr.sh <clientId> <feedbackId> [guidance]`          | Asks Usero to open an AI PR. Returns `prId`. Asynchronous.                                              | `request_ai_pr`       |
+| `check-status.sh <clientId> <prId>`                        | PR status. Terminal: `created`, `failed`, `blocked`.                                                    | `get_pr_status`       |
+| `full-workflow.sh "Name" owner/repo <issueUrl> [guidance]` | Create client, import issue, open PR, poll until terminal (15 min cap).                                 | none                  |
+| `list-feedback.sh <clientId> [page] [limit] [environment]` | Feedback items with pagination.                                                                         | `search_feedback`     |
+| `list-forms.sh <clientId>`                                 | Forms with response counts.                                                                             | `list_forms`          |
+| `create-form.sh <clientId> <title> [description]`          | Creates an empty form. Returns `id` and `slug`. Field JSON shape: https://usero.io/docs/forms#api       | `create_form`         |
+| `get-form.sh <clientId> <formId>`                          | One form with fields, settings, response count.                                                         | `get_form`            |
+| `update-form.sh <clientId> <formId> '<json>'`              | Updates `title`, `description`, `fields`, `settings`, `published`.                                      | `update_form`         |
+| `delete-form.sh <clientId> <formId>`                       | Deletes a form and all its responses. Confirm with the user first.                                      | `delete_form`         |
+| `list-responses.sh <clientId> <formId> [page] [limit]`     | Form responses, paginated.                                                                              | `list_form_responses` |
+| `form-analytics.sh <clientId> <formId>`                    | Sessions, views, completion rate, per-field completion.                                                 | none (REST only)      |
+
+**Creating a client with a repo fails unless the Usero GitHub App already has access to that repo**, which it never does for a
+repo created moments ago:
+
+```
+"error": "GitHub App installation does not have access to owner/repo."
+```
+
+Drop the repo argument if the client only collects feedback. For PR generation, grant access at
+https://github.com/settings/installations and run it again, or connect GitHub later from the client's Integrations page.
+
+### PR status values
+
+| Status       | Meaning                   | Terminal |
+| ------------ | ------------------------- | -------- |
+| `pending`    | Waiting to start          | no       |
+| `queued`     | In the queue              | no       |
+| `processing` | Claude Code is working    | no       |
+| `created`    | PR opened                 | yes      |
+| `failed`     | Error, see `errorMessage` | yes      |
+| `blocked`    | Plan limit reached        | yes      |
+
+Poll every 15 seconds. `full-workflow.sh` does this for you.
+
+## Adding the feedback widget to a project
+
+Creating a client is half of it. The client is where feedback lands; the widget is what sends it. Docs:
+https://usero.io/docs/widget
+
+```bash
+npm install @usero/sdk
+```
+
+```ts
+import { initUseroFeedbackWidget } from '@usero/sdk'
+
+initUseroFeedbackWidget({ clientId: 'client_...' })
+```
+
+There is also a CDN form (`<script src="https://unpkg.com/@usero/sdk">`, then `Usero.initUseroFeedbackWidget({...})`) for a plain
+HTML page with no build step. Prefer the npm package for anything bundled, and for any app that runs locally or offline.
+
+- It attaches its own shadow root to `document.body` and is not part of the React tree. Mount it once at the entry point, not
+  inside a component that could remount.
+- Wrap the call in `try/catch`. The widget failing to load must never take the host app down.
+- It follows `prefers-color-scheme`; pass `theme` only to override.
+- Omit the `environment` option for the default environment.
+
+## Rules
+
+- Never print an API key, except that the key `check_signup` returns must be written into the MCP config and `USERO_API_KEY` right
+  away (that is the one place it exists). Scripts read it from the environment; the MCP header is set by the plugin config.
+- `request_ai_pr`, `delete_form`, `create-pr.sh`, `delete-form.sh` and `full-workflow.sh` have side effects on the user's repo or
+  data. Say what you are about to do and confirm before running them, unless the user already asked for exactly that action.
+- Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
