@@ -1,7 +1,7 @@
 {
   "name": "usero",
-  "version": "0.1.0",
-  "description": "Read your Usero feedback inbox and clusters, file feedback, and open AI pull requests from Claude Code. Bundles the usero MCP server config and a skill that knows when to reach for it.",
+  "version": "0.2.0",
+  "description": "Read your Usero feedback inbox and clusters, file feedback, build surveys and forms, and open AI pull requests from Claude Code. Bundles the usero MCP server config and a skill that knows when to reach for it.",
   "author": {
     "name": "Usero",
     "url": "https://usero.io"

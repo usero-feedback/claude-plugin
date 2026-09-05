@@ -12,8 +12,8 @@
     {
       "name": "usero",
       "source": "./plugins/usero",
-      "description": "Read your Usero feedback inbox and clusters, file feedback, and open AI pull requests from Claude Code.",
-      "version": "0.1.0",
+      "description": "Read your Usero feedback inbox and clusters, file feedback, build surveys and forms, and open AI pull requests from Claude Code.",
+      "version": "0.2.0",
       "author": {
         "name": "Usero",
         "url": "https://usero.io"
