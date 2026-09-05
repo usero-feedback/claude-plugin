@@ -15,13 +15,15 @@ Usero turns user feedback into shipped code.
 
 **No API key yet?** Do not send the user to a signup page. If the `usero` MCP server is connected but every tool answers 401, or
 the only tools you see are `start_signup` and `check_signup`, run the signup from here: ask for the user's email, call
-`start_signup(email, clientName: "Claude Code")`, tell the user to open the link in their inbox and press "Yes, connect Claude
-Code" on the page, and poll `check_signup(pollToken)` every few seconds without ending your turn. It returns the API key once.
-Save it straight away: run `claude mcp remove usero` (Claude Code will not overwrite a server name in place), then
-`claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer <key>"` (same scope the server was
-added with) and export `USERO_API_KEY` for the scripts. Then `create_client(name, repo?)` for their product and
-`connect_github(clientId)` for the install URL; poll `check_github(clientId)` until it lands. If the server is not connected at
-all, add it first with `claude mcp add --transport http usero https://usero.io/mcp` (no header) and start from `start_signup`.
+`start_signup(email, clientName: "Claude Code")`, tell the user Usero has emailed them (subject "Connect Claude Code to Usero")
+and to press the button in it, then "Yes, connect Claude Code" on the page, and poll `check_signup(pollToken)` every 5 seconds
+without ending your turn. It returns the API key once. Save it straight away: add `export USERO_API_KEY=<key>` to their shell
+profile, then, only if `claude mcp list` already shows a `usero` server, `claude mcp remove usero` (Claude Code will not overwrite
+a server name in place), then
+`claude mcp add --transport http usero https://usero.io/mcp --header 'Authorization: Bearer ${USERO_API_KEY}'` (single quotes,
+same scope the server was added with). Then `create_client(name, repo?)` for their product and `connect_github(clientId)` for the
+install URL; poll `check_github(clientId)` until it lands. If the server is not connected at all, add it first with
+`claude mcp add --transport http usero https://usero.io/mcp` (no header) and start from `start_signup`.
 
 This skill gives you two ways in:
 
