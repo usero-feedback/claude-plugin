@@ -37,11 +37,13 @@ This skill gives you two ways in:
 How to tell which you have: look at your tool list for `list_clients` or `search_feedback`. Present means MCP. Absent means REST.
 Do not run `claude mcp` commands to find out.
 
-Two actions exist only on REST (importing a GitHub issue, form analytics). For those, use the scripts even when MCP is connected.
-Forms are MCP-first: `create_form`, `get_form`, `update_form` and `delete_form` take typed fields and return the public link
-(`get_form_theme_options` and `preview_form_theme` theme one from a brief without saving), so never fall back to `create-form.sh`
-or `update-form.sh` while those tools are present, and never read Usero's source to find the field shape; the tool schema is the
-documentation.
+When no MCP tools are available, every action below has a REST script equivalent (see the table); `import-issue.sh` and
+`form-analytics.sh` are that fallback for the two newest tools. Forms are MCP-first: `create_form`, `get_form`, `update_form` and
+`delete_form` take typed fields and return the public link (`get_form_theme_options` and `preview_form_theme` theme one from a
+brief without saving), so never fall back to `create-form.sh` or `update-form.sh` while those tools are present, and never read
+Usero's source to find the field shape; the tool schema is the documentation. GitHub issue import and form analytics are MCP-first
+too: prefer `import_github_issue` over `import-issue.sh` and `get_form_analytics` over `form-analytics.sh` while those tools are
+present (the scripts stay as the no-MCP fallback).
 
 ## Setup the user needs once
 
@@ -80,6 +82,10 @@ Always start with `list_clients` unless the user has already given you a client 
 | `delete_form`             | Removing a form and all its responses. Irreversible; confirm with the user first. Prefer `update_form` with `published: false` to pause.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `get_form_theme_options`  | Theming a form from a brief. Read once per session: schema, presets as full objects, textures, layouts, font pairings, contrast rules, worked examples. Pass `formId` to also see the current theme.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `preview_form_theme`      | You have composed an appearance and want the user to see it before saving. Returns the contrast report and a signed one-hour `previewUrl` (no save, no submissions). Iterate here until `ok` is true and the user approves, then `update_form`.                                                                                                                                                                                                                                                                                                                                                                                            |
+| `get_form_analytics`      | "How is this form converting", "which fields get skipped". Aggregate funnel for one form; use `list_form_responses` for individual answers. Args: `clientId`, `formId`. Returns sessions (unique visitors), views (page loads), submit attempts and successes, completion rate, average session duration, per-field completions and response count.                                                                                                                                                                                                                                                                                        |
+| `import_github_issue`     | "File this issue in Usero", "import owner/repo#123". Args: `clientId`, `issueUrl`. Use only for a GitHub issue URL; use `create_feedback` for pasted text. Creates a feedback item from the issue that appears in inbox search and clusters; the URL must belong to the client's connected repo. Repeats return the existing item with `alreadyImported: true`. Providing the URL is the confirmation.                                                                                                                                                                                                                                     |
+| `list_ai_user_test_runs`  | "What did the AI user tests find". Args: `clientId`, optional `environment` (omit to cover the default environment, feedback with no environment set), `limit` (max 50). Runs newest first with verdict (`clean` is the only pass), summary, finding counts and schedule flag. Read-only; starting runs and scheduling stay in the dashboard.                                                                                                                                                                                                                                                                                              |
+| `get_ai_user_test_run`    | Drill into one AI test run: verdict (`clean` means no issues found), summary, whether on a schedule, every finding with severity, category, what happened and timestamp to jump to in the replay. Args: `clientId`, `runId`, optional `includeSteps` (step trace, large on long runs). Starting a run or changing its schedule stays in the dashboard.                                                                                                                                                                                                                                                                                     |
 | `create_user_test`        | "Run a paid round on my checkout", "test the new landing page with 5 users". Args: `clientId`, `name`, `targetUrl`, `tasks` (1 to 20 prompts in order), optional `introMessage`, `rewardDollars` (e.g. "15"), `rewardCurrency`, `minDurationSeconds` (default 30, advisory only). Returns the participant `shareUrl` (`/ut/<slug>`) to hand the user.                                                                                                                                                                                                                                                                                      |
 | `list_user_tests`         | "Show my user tests", "which tests have payouts waiting". Args: `clientId`, optional `limit` (max 50). Tests newest first with share URL, reward, task count, session counts by status and `readyToPayCount`.                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `get_user_test`           | You need one test in full (tasks in order, counts) plus the 20 most recent sessions with status, payment state, quality flag and duration. Args: `clientId`, `testId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -114,6 +120,13 @@ hand the user the `shareUrl`. When sessions land, `list_user_test_sessions` with
 waiting, `get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then `release_payment` per
 session, confirming with the user first each time (name the tester and the reward). No shell, no scripts.
 
+**"How is this form converting?"** `get_form_analytics` with the `clientId` and `formId`. Quote the completion rate and the
+per-field completions.
+
+**"What did the AI user tests find?"** `list_ai_user_test_runs` for the verdicts (`clean` is the only pass), then
+`get_ai_user_test_run` on the interesting runs to read the findings. Starting a run or changing its schedule stays in the
+dashboard.
+
 **"Set me up with Usero."** `start_signup`, wait for the click via `check_signup`, save the key, `create_client`, then
 `connect_github` and `check_github`. End by telling the user which client was created and whether GitHub is connected.
 
@@ -138,7 +151,7 @@ deployment. Every script prints JSON on success and `Error (<code>)` plus the bo
 | Script                                                     | Does                                                                                                    | MCP equivalent        |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------- |
 | `create-client.sh "Name" [owner/repo]`                     | Creates a client. Repo is optional and only for PR generation; see the note below.                      | `create_client`       |
-| `import-issue.sh <clientId> <issueUrl>`                    | Imports a GitHub issue as feedback. URL must match the client's repo. Idempotent. Returns `feedbackId`. | none (REST only)      |
+| `import-issue.sh <clientId> <issueUrl>`                    | Imports a GitHub issue as feedback. URL must match the client's repo. Idempotent. Returns `feedbackId`. | `import_github_issue` |
 | `create-pr.sh <clientId> <feedbackId> [guidance]`          | Asks Usero to open an AI PR. Returns `prId`. Asynchronous.                                              | `request_ai_pr`       |
 | `check-status.sh <clientId> <prId>`                        | PR status. Terminal: `created`, `failed`, `blocked`.                                                    | `get_pr_status`       |
 | `full-workflow.sh "Name" owner/repo <issueUrl> [guidance]` | Create client, import issue, open PR, poll until terminal (15 min cap).                                 | none                  |
@@ -149,7 +162,7 @@ deployment. Every script prints JSON on success and `Error (<code>)` plus the bo
 | `update-form.sh <clientId> <formId> '<json>'`              | Updates `title`, `description`, `fields`, `settings`, `published`.                                      | `update_form`         |
 | `delete-form.sh <clientId> <formId>`                       | Deletes a form and all its responses. Confirm with the user first.                                      | `delete_form`         |
 | `list-responses.sh <clientId> <formId> [page] [limit]`     | Form responses, paginated.                                                                              | `list_form_responses` |
-| `form-analytics.sh <clientId> <formId>`                    | Sessions, views, completion rate, per-field completion.                                                 | none (REST only)      |
+| `form-analytics.sh <clientId> <formId>`                    | Sessions, views, completion rate, per-field completion.                                                 | `get_form_analytics`  |
 
 **Creating a client with a repo fails unless the Usero GitHub App already has access to that repo**, which it never does for a
 repo created moments ago:
