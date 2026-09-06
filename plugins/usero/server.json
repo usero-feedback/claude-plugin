@@ -3,7 +3,7 @@
   "name": "io.usero/usero",
   "title": "Usero",
   "description": "Read your Usero feedback inbox and clusters, file feedback, build forms, and open an AI PR.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "websiteUrl": "https://usero.io/docs/mcp",
   "repository": {
     "url": "https://github.com/usero-feedback/claude-plugin",
