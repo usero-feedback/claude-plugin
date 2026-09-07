@@ -91,6 +91,8 @@ Always start with `list_clients` unless the user has already given you a client 
 | `get_user_test`           | You need one test in full (tasks in order, counts) plus the 20 most recent sessions with status, payment state, quality flag and duration. Args: `clientId`, `testId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `list_user_test_sessions` | Review a round. Args: `clientId`, `testId`, optional `status` and `paymentStatus` filters, `limit` (max 50). Sessions newest first with tester, payment state, quality flag, duration, audio flag, task and note counts, auto-release deadline.                                                                                                                                                                                                                                                                                                                                                                                            |
 | `get_user_test_session`   | Drill into one session before paying it: tester, payout details, task completions with prompts, notes, transcript excerpt, research asset and replay pointers, findings, muted segments, end note. Audio stays in the dashboard. Args: `clientId`, `sessionId`.                                                                                                                                                                                                                                                                                                                                                                            |
+| `update_user_test`        | Edit a test. Only passed args change. `tasks` replaces the whole list: `get_user_test` first, edit, send back whole; refused once the test has sessions, to protect completion history. `introMessage: ""` clears it, `rewardDollars: ""` makes the test unpaid. Other fields stay editable any time.                                                                                                                                                                                                                                                                                                                                      |
+| `delete_user_test`        | Delete a test and its tasks; the share link stops resolving. Irreversible; confirm with the user first. Refused when the test has sessions, keeping session history. Args: `clientId`, `testId`.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `release_payment`         | Mark a `ready_to_pay` session paid. Anything else returns an error naming the current status. Same guard as the dashboard. Confirm with the user first, naming the tester and reward. Args: `clientId`, `sessionId`.                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 The `environment` argument is the environment name sent from the widget. Omit it to search every environment. The literal `no-env`
@@ -116,9 +118,10 @@ rather than you.
 end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
 
 **"Run a paid user test round."** `list_clients` if needed, then `create_user_test` (name, target URL, task prompts, reward) and
-hand the user the `shareUrl`. When sessions land, `list_user_test_sessions` with `paymentStatus: "ready_to_pay"` to find payouts
-waiting, `get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then `release_payment` per
-session, confirming with the user first each time (name the tester and the reward). No shell, no scripts.
+hand the user the `shareUrl`. To fix copy or settings later, `update_user_test` (tasks can only change before the first session).
+When sessions land, `list_user_test_sessions` with `paymentStatus: "ready_to_pay"` to find payouts waiting,
+`get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then `release_payment` per session,
+confirming with the user first each time (name the tester and the reward). No shell, no scripts.
 
 **"How is this form converting?"** `get_form_analytics` with the `clientId` and `formId`. Quote the completion rate and the
 per-field completions.
@@ -215,7 +218,7 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 
 - Never print an API key, except that the key `check_signup` returns must be written into the MCP config and `USERO_API_KEY` right
   away (that is the one place it exists). Scripts read it from the environment; the MCP header is set by the plugin config.
-- `request_ai_pr`, `delete_form`, `release_payment`, `create-pr.sh`, `delete-form.sh` and `full-workflow.sh` have side effects on
-  the user's repo or data. Say what you are about to do and confirm before running them, unless the user already asked for exactly
-  that action.
+- `request_ai_pr`, `delete_form`, `delete_user_test`, `release_payment`, `create-pr.sh`, `delete-form.sh` and `full-workflow.sh`
+  have side effects on the user's repo or data. Say what you are about to do and confirm before running them, unless the user
+  already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
