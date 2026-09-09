@@ -87,6 +87,11 @@ per-field completions.
 `get_ai_user_test_run` on the interesting runs to read the findings. Starting a run or changing its schedule stays in the
 dashboard.
 
+**"Sync my App Store / Play reviews."** `connect_app_reviews` with the `clientId` plus `appleAppId` (numeric, optional
+`appleCountry`, default us) or `playPackageName` (at least one store id required), then poll `app_reviews_status` until the phase
+is `done`. Prod Apple syncs often report a 403 in `lastSyncError` (Apple RSS blocks Workers egress) while Play lands first; a
+Play-only connect avoids that. Disconnect stays in the dashboard.
+
 **"Set me up with Usero."** `start_signup`, wait for the click via `check_signup`, save the key, `create_client`, then
 `connect_github` and `check_github`. End by telling the user which client was created and whether GitHub is connected.
 
