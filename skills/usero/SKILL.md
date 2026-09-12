@@ -92,6 +92,11 @@ dashboard.
 is `done`. Prod Apple syncs often report a 403 in `lastSyncError` (Apple RSS blocks Workers egress) while Play lands first; a
 Play-only connect avoids that. Disconnect stays in the dashboard.
 
+**"Note that moment in the recording."** `note_replay_moment` with the `clientId`, exactly one of `sessionReplayId` (from
+`get_feedback`) or `userTestSessionId` (from `list_user_test_sessions`), the `replayAtMs`, a one-line `title`, and optionally
+`description`, `severity`, `pageUrl` and the participant's verbatim `quote`. The item lands in the inbox with source `replay-note`
+and its replay link opens at that second.
+
 **"Set me up with Usero."** `start_signup`, wait for the click via `check_signup`, save the key, `create_client`, then
 `connect_github` and `check_github`. End by telling the user which client was created and whether GitHub is connected.
 
