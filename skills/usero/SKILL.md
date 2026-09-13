@@ -2,10 +2,11 @@
 name: usero
 description:
   Work with Usero, the user feedback tool, from inside the agent. Use whenever the user mentions Usero, asks what users are saying
-  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants to build or edit
-  a survey or feedback form and get its public link, or wants Usero to open or check an AI pull request for a feedback item (Usero
-  writes the PR server-side). The MCP server tools cover all of that; the bundled REST scripts additionally import GitHub issues
-  and read form analytics, and are the fallback when no MCP server is connected.
+  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub or
+  Linear issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, or wants
+  Usero to open or check an AI pull request for a feedback item (Usero writes the PR server-side). The MCP server tools cover all
+  of that; the bundled REST scripts additionally import GitHub issues and read form analytics, and are the fallback when no MCP
+  server is connected.
 allowed-tools: Bash
 ---
 
@@ -20,8 +21,9 @@ the key. Each tool description names the next step, so follow those, ending with
 
 This skill gives you two ways in:
 
-1. **MCP tools** (preferred). If the `usero` MCP server is connected you have tools named `list_clients`, `search_feedback` and so
-   on. Use them. They return structured JSON, are scoped to the user's clients, and need no shell.
+1. **MCP tools** (preferred). If the `usero` MCP server is connected you have tools named `list_clients`, `search_feedback`,
+   `get_feedback`, `create_issue` and so on. Use them. They return structured JSON, are scoped to the user's clients, and need no
+   shell.
 2. **REST scripts** (fallback). If no `usero` MCP tools are available, run the shell scripts in the `scripts/` directory next to
    this file. When loaded as a plugin that directory is `${CLAUDE_PLUGIN_ROOT}/skills/usero/scripts/`; when loaded from
    `~/.claude/skills/usero/` it is `~/.claude/skills/usero/scripts/`. Every script needs `USERO_API_KEY` in the environment (or in
@@ -68,6 +70,12 @@ Quote users verbatim, name the cluster size, and say what you would fix first an
 **"Fix the top complaint."** `list_clusters`, `get_cluster`, then find the cause in the current repo and fix it yourself.
 Reference the feedback ids and a quote in the commit or PR body. Only call `request_ai_pr` if the user asks Usero to open the PR
 rather than you.
+
+**"Open an issue for this."** `get_feedback` on the item (its `issues` list shows any tracker issue already linked), then
+`create_issue` with the `feedbackId`. Omit `title` and `body` for the dashboard draft, or pass your own; `tracker` is `github` or
+`linear` and defaults to the tracker selected in the client's settings. Reply with the identifier (`#123` or `ENG-12`) and URL;
+`alreadyLinked: true` means it already had one and nothing new was created. If the error says no tracker is connected, point the
+user at the client's Integrations page rather than retrying.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`.
 
@@ -185,7 +193,7 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 
 - Never print an API key, except that the key `check_signup` returns must be written into the MCP config and `USERO_API_KEY` right
   away (that is the one place it exists). Scripts read it from the environment; the MCP header is set by the plugin config.
-- `request_ai_pr`, `delete_form`, `delete_user_test`, `release_payment`, `create-pr.sh`, `delete-form.sh` and `full-workflow.sh`
-  have side effects on the user's repo or data. Say what you are about to do and confirm before running them, unless the user
-  already asked for exactly that action.
+- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test`, `release_payment`, `create-pr.sh`, `delete-form.sh` and
+  `full-workflow.sh` have side effects on the user's repo, tracker or data. Say what you will do and confirm before running them,
+  unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
