@@ -3,10 +3,10 @@ name: usero
 description:
   Work with Usero, the user feedback tool, from inside the agent. Use whenever the user mentions Usero, asks what users are saying
   or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub or
-  Linear issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, or wants
-  Usero to open or check an AI pull request for a feedback item (Usero writes the PR server-side). The MCP server tools cover all
-  of that; the bundled REST scripts additionally import GitHub issues and read form analytics, and are the fallback when no MCP
-  server is connected.
+  Linear issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, asks
+  whether Intercom or app reviews are syncing, or wants Usero to open or check an AI pull request for a feedback item (Usero
+  writes the PR server-side). The MCP server tools cover all of that; the bundled REST scripts additionally import GitHub issues
+  and read form analytics, and are the fallback when no MCP server is connected.
 allowed-tools: Bash
 ---
 
@@ -22,8 +22,8 @@ the key. Each tool description names the next step, so follow those, ending with
 This skill gives you two ways in:
 
 1. **MCP tools** (preferred). If the `usero` MCP server is connected you have tools named `list_clients`, `search_feedback`,
-   `get_feedback`, `create_issue` and so on. Use them. They return structured JSON, are scoped to the user's clients, and need no
-   shell.
+   `get_feedback`, `create_issue`, `intercom_status` and so on. Use them. They return structured JSON, are scoped to the user's
+   clients, and need no shell.
 2. **REST scripts** (fallback). If no `usero` MCP tools are available, run the shell scripts in the `scripts/` directory next to
    this file. When loaded as a plugin that directory is `${CLAUDE_PLUGIN_ROOT}/skills/usero/scripts/`; when loaded from
    `~/.claude/skills/usero/` it is `~/.claude/skills/usero/scripts/`. Every script needs `USERO_API_KEY` in the environment (or in
@@ -99,6 +99,12 @@ dashboard.
 `appleCountry`, default us) or `playPackageName` (at least one store id required), then poll `app_reviews_status` until the phase
 is `done`. Prod Apple syncs often report a 403 in `lastSyncError` (Apple RSS blocks Workers egress) while Play lands first; a
 Play-only connect avoids that. Disconnect stays in the dashboard.
+
+**"Is Intercom syncing?" / "Pull my Intercom conversations now."** `intercom_status` with the `clientId` for what is connected and
+when it last synced: `lastSyncedAt` is the run's wall clock, `lastPolledAt` is the newest item's `updated_at` (the cursor),
+`diagnosis` says in plain words why nothing arrived (tag filter mismatch, expired token, nothing new), and `syncRuns` lists the
+last 5 runs. `sync_intercom` queues a sync now and returns at once; poll `intercom_status` until a new run appears in `syncRuns`.
+If it errors with "not connected", point the user at the client's Integrations page (OAuth connect stays in the dashboard).
 
 **"Note that moment in the recording."** `note_replay_moment` with the `clientId`, exactly one of `sessionReplayId` (from
 `get_feedback`) or `userTestSessionId` (from `list_user_test_sessions`), the `replayAtMs`, a one-line `title`, and optionally
