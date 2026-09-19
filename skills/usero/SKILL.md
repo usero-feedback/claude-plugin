@@ -2,8 +2,8 @@
 name: usero
 description:
   Work with Usero, the user feedback tool, from inside the agent. Use whenever the user mentions Usero, asks what users are saying
-  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub or
-  Linear issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, asks
+  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub, Linear
+  or Jira issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, asks
   whether Intercom or app reviews are syncing, or wants Usero to open or check an AI pull request for a feedback item (Usero
   writes the PR server-side). The MCP server tools cover all of that; the bundled REST scripts additionally import GitHub issues
   and read form analytics, and are the fallback when no MCP server is connected.
@@ -72,10 +72,10 @@ Reference the feedback ids and a quote in the commit or PR body. Only call `requ
 rather than you.
 
 **"Open an issue for this."** `get_feedback` on the item (its `issues` list shows any tracker issue already linked), then
-`create_issue` with the `feedbackId`. Omit `title` and `body` for the dashboard draft, or pass your own; `tracker` is `github` or
-`linear` and defaults to the tracker selected in the client's settings. Reply with the identifier (`#123` or `ENG-12`) and URL;
-`alreadyLinked: true` means it already had one and nothing new was created. If the error says no tracker is connected, point the
-user at the client's Integrations page rather than retrying.
+`create_issue` with the `feedbackId`. Omit `title` and `body` for the dashboard draft, or pass your own; `tracker` is `github`,
+`linear` or `jira` and defaults to the tracker selected in the client's settings. Reply with the identifier (`#123`, `ENG-12` or
+`PROJ-123`) and URL; `alreadyLinked: true` means it already had one and nothing new was created. If the error says no tracker is
+connected, point the user at the client's Integrations page rather than retrying.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`.
 
