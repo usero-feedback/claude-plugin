@@ -26,36 +26,22 @@ claude plugin install usero@usero
 
 ## Sign in
 
-The plugin has no API key to set. It connects with OAuth: on first use Claude Code shows that `usero` needs authentication. Open
-`/mcp`, pick `usero`, choose Authenticate, and approve the connection in the browser (a new email gets an account on the way).
-Claude Code stores and refreshes the token itself, so nothing lands in your shell profile or config files. From a terminal,
-`claude mcp login plugin:usero:usero` does the same.
+The plugin connects with OAuth: on first use Claude Code shows that `usero` needs authentication. Open `/mcp`, pick `usero`,
+choose Authenticate, and approve the connection in the browser (a new email gets an account on the way). Claude Code stores and
+refreshes the session itself.
 
-Check `/mcp` shows `usero` connected with its tools, then try: "list my usero clients". The token acts as you: the agent sees
+Check `/mcp` shows `usero` connected with its tools, then try: "list my usero clients". The session acts as you: the agent sees
 every client you are a member of and nothing else.
 
 ### Upgrading from 0.11 or earlier
 
-Earlier versions read an API key from an environment variable in your shell. 0.12.0 doesn't: run `/plugin update usero@usero` (or
-`claude plugin update usero@usero`), restart, and sign in once through `/mcp` as above. You can then delete that export from your
-shell profile unless another tool uses it, and revoke the key on https://usero.io/profile. The bundled REST scripts are gone too;
-every action they covered is an MCP tool.
+Run `/plugin update usero@usero`, restart, and sign in once through `/mcp` as above. The bundled REST scripts are gone; every
+action they covered is an MCP tool.
 
-## Just the MCP server, or a static key
+### Not on Claude Code, or running headless?
 
-If you only want the tools and not the skill, or you run Claude Code headless (`claude -p`, CI) where the browser sign-in can't
-happen, add the server yourself with an API key from https://usero.io/profile (keys look like `usk_live_...` and are shown once):
-
-```bash
-claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer usk_live_..."
-```
-
-Add `--scope user` to make it available in every project. Check with `claude mcp list`.
-
-### Not on Claude Code?
-
-This plugin is Claude Code only. Cursor, Windsurf, Claude Desktop, VS Code and any other MCP client connect to the same server
-with the config block for your client at https://usero.io/docs/mcp.
+This plugin is Claude Code only. Cursor, Windsurf, Claude Desktop, VS Code, headless runs and any other MCP client connect to the
+same server with the setup for your client at https://usero.io/docs/mcp.
 
 ## Testing a local checkout
 
@@ -72,8 +58,7 @@ without restarting.
 ```
 plugins/usero/
   .claude-plugin/plugin.json   name, version, homepage, icon, privacy policy
-  .mcp.json                    the remote MCP server, OAuth sign-in (?auth=oauth)
-  assets/icon.png              512x512 listing icon
+  .mcp.json                    the remote MCP server, OAuth sign-in (https://usero.io/mcp/oauth)
   skills/usero/SKILL.md        when and how to use the tools
 ```
 

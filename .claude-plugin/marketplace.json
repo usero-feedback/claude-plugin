@@ -13,7 +13,7 @@
       "name": "usero",
       "source": "./plugins/usero",
       "description": "Read your Usero feedback inbox and clusters, file feedback, build surveys and forms, and open AI pull requests from Claude Code.",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "author": {
         "name": "Usero",
         "url": "https://usero.io"

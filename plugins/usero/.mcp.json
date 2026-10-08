@@ -2,7 +2,7 @@
   "mcpServers": {
     "usero": {
       "type": "http",
-      "url": "https://usero.io/mcp?auth=oauth"
+      "url": "https://usero.io/mcp/oauth"
     }
   }
 }

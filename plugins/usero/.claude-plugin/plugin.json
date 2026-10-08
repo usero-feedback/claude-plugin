@@ -1,6 +1,6 @@
 {
   "name": "usero",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "The direct line from user to engineer. Search your feedback board, clusters and survey answers from Claude, then turn them into GitHub, Linear or Jira issues.",
   "author": {
     "name": "Usero",
@@ -10,7 +10,7 @@
   "repository": "https://github.com/usero-feedback/claude-plugin",
   "license": "MIT",
   "keywords": ["usero", "feedback", "user-feedback", "mcp", "pull-request", "clusters"],
-  "icon": "./assets/icon.png",
+  "icon": "https://usero.io/icons/web-app-manifest-512x512.png",
   "documentationUrl": "https://usero.io/docs/mcp",
   "supportUrl": "https://usero.io/contact",
   "privacyPolicyUrl": "https://usero.io/privacy",

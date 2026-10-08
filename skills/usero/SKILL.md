@@ -18,22 +18,17 @@ fields through `create_form`, `get_form`, `update_form` and `delete_form` and re
 to find a field shape; the tool schema is the documentation.
 
 **Not connected yet?** Look at your tool list for `list_clients` or `search_feedback`. If they are missing, the server needs a
-sign-in, which only the user can do. Do not run `claude mcp` commands to find out, and do not ask for an API key. Tell the user:
+sign-in, which only the user can do in the browser. Do not run `claude mcp` commands to find out. Tell the user:
 
 - Installed as the Claude Code plugin: open `/mcp`, pick `usero`, choose Authenticate and approve in the browser. A new email gets
-  an account on the way. From a terminal, `claude mcp login plugin:usero:usero` does the same.
+  an account on the way.
 - Plugin not installed: `/plugin marketplace add usero-feedback/claude-plugin`, then `/plugin install usero@usero`, restart, and
   sign in as above.
 
-If only `start_signup` and `check_signup` are visible, the server was added by hand without a credential. Follow those tools (ask
-for the user's email, show the `userCode`, poll `check_signup`), then hand the user the setup snippet it returns rather than
-saving anything yourself. Each tool description names the next step, ending with `create_client` and `connect_github`.
-
 ## Setup the user needs once
 
-- Claude Code plugin: install it and sign in through `/mcp` (above). No key, nothing in the shell profile.
-- Other MCP clients, or headless runs where a browser sign-in can't happen: the config blocks at https://usero.io/docs/mcp.
-- Docs: https://usero.io/docs/mcp (MCP) and https://usero.io/docs/api (REST).
+- Claude Code plugin: install it and sign in through `/mcp` (above).
+- Other MCP clients: the setup guide at https://usero.io/docs/mcp.
 
 ## MCP tools
 
@@ -97,8 +92,8 @@ If it errors with "not connected", point the user at the client's Integrations p
 `description`, `severity`, `pageUrl` and the participant's verbatim `quote`. The item lands in the inbox with source `replay-note`
 and its replay link opens at that second.
 
-**"Set me up with Usero."** `start_signup`, wait for the click via `check_signup`, save the key, `create_client`, then
-`connect_github` and `check_github`. End by telling the user which client was created and whether GitHub is connected.
+**"Set me up with Usero."** Once the user has signed in through `/mcp`, `create_client`, then `connect_github` and `check_github`.
+End by telling the user which client was created and whether GitHub is connected.
 
 **"Theme this form like a warm print newsletter" (any brief).** Four steps, no dashboard:
 
@@ -164,8 +159,7 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 
 ## Rules
 
-- Never print, store or ask for an API key. The plugin signs in with OAuth and Claude Code holds the token; the one exception is
-  the setup snippet `check_signup` returns, which goes to the user as is.
+- Sign-in happens only in the browser through `/mcp`, and Claude Code holds the session. Never ask the user to paste a secret.
 - `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test` and `release_payment` have side effects on the user's repo,
   tracker or data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
