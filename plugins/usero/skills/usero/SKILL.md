@@ -5,48 +5,34 @@ description:
   or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub, Linear
   or Jira issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, asks
   whether Intercom or app reviews are syncing, or wants Usero to open or check an AI pull request for a feedback item (Usero
-  writes the PR server-side). The MCP server tools cover all of that; the bundled REST scripts additionally import GitHub issues
-  and read form analytics, and are the fallback when no MCP server is connected.
-allowed-tools: Bash
+  writes the PR server-side). The usero MCP server tools cover all of that, including GitHub issue import and form analytics.
 ---
 
 # Usero
 
-Usero turns user feedback into shipped code.
+Usero is the direct line from user to engineer.
 
-**No API key yet?** If no `usero` tools are visible at all, connect the server first with
-`claude mcp add --transport http usero https://usero.io/mcp` (no header), then load the `start_signup` tool and follow it. Ask for
-the user's email, call it, tell the user to open the email and press the button, then keep polling `check_signup` until it returns
-the key. Each tool description names the next step, so follow those, ending with `create_client` and `connect_github`.
+Everything goes through the `usero` MCP server's tools (`list_clients`, `search_feedback`, `get_feedback`, `create_issue`,
+`intercom_status` and so on). They return structured JSON, are scoped to the user's clients, and need no shell. Forms take typed
+fields through `create_form`, `get_form`, `update_form` and `delete_form` and return the public link, so never read Usero's source
+to find a field shape; the tool schema is the documentation.
 
-This skill gives you two ways in:
+**Not connected yet?** Look at your tool list for `list_clients` or `search_feedback`. If they are missing, the server needs a
+sign-in, which only the user can do. Do not run `claude mcp` commands to find out, and do not ask for an API key. Tell the user:
 
-1. **MCP tools** (preferred). If the `usero` MCP server is connected you have tools named `list_clients`, `search_feedback`,
-   `get_feedback`, `create_issue`, `intercom_status` and so on. Use them. They return structured JSON, are scoped to the user's
-   clients, and need no shell.
-2. **REST scripts** (fallback). If no `usero` MCP tools are available, run the shell scripts in the `scripts/` directory next to
-   this file. When loaded as a plugin that directory is `${CLAUDE_PLUGIN_ROOT}/skills/usero/scripts/`; when loaded from
-   `~/.claude/skills/usero/` it is `~/.claude/skills/usero/scripts/`. Every script needs `USERO_API_KEY` in the environment (or in
-   `~/.zshrc`).
+- Installed as the Claude Code plugin: open `/mcp`, pick `usero`, choose Authenticate and approve in the browser. A new email gets
+  an account on the way. From a terminal, `claude mcp login plugin:usero:usero` does the same.
+- Plugin not installed: `/plugin marketplace add usero-feedback/claude-plugin`, then `/plugin install usero@usero`, restart, and
+  sign in as above.
 
-How to tell which you have: look at your tool list for `list_clients` or `search_feedback`. Present means MCP. Absent means REST.
-Do not run `claude mcp` commands to find out.
-
-When no MCP tools are available, the REST scripts below cover the same actions (`import-issue.sh` and `form-analytics.sh` are that
-fallback for the two newest tools). Forms are MCP-first: `create_form`, `get_form`, `update_form` and `delete_form` take typed
-fields and return the public link (`get_form_theme_options` and `preview_form_theme` theme one from a brief without saving), so
-never read Usero's source to find the field shape; the tool schema is the documentation. GitHub issue import and form analytics
-are MCP-first too: prefer `import_github_issue` over `import-issue.sh` and `get_form_analytics` over `form-analytics.sh` while
-those tools are present (the scripts stay as the no-MCP fallback).
+If only `start_signup` and `check_signup` are visible, the server was added by hand without a credential. Follow those tools (ask
+for the user's email, show the `userCode`, poll `check_signup`), then hand the user the setup snippet it returns rather than
+saving anything yourself. Each tool description names the next step, ending with `create_client` and `connect_github`.
 
 ## Setup the user needs once
 
-- API key: `start_signup` from the agent (above), or https://usero.io/profile under API keys. Keys look like `usk_live_...` and
-  are shown once.
-- MCP path: install the plugin (`/plugin marketplace add usero-feedback/claude-plugin`, then `/plugin install usero@usero`) with
-  `USERO_API_KEY` exported in the shell, or
-  `claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer usk_live_..."`.
-- REST path: `export USERO_API_KEY="usk_live_..."` in `~/.zshrc`.
+- Claude Code plugin: install it and sign in through `/mcp` (above). No key, nothing in the shell profile.
+- Other MCP clients, or headless runs where a browser sign-in can't happen: the config blocks at https://usero.io/docs/mcp.
 - Docs: https://usero.io/docs/mcp (MCP) and https://usero.io/docs/api (REST).
 
 ## MCP tools
@@ -127,26 +113,7 @@ and its replay link opens at that second.
 4. On approval, `update_form` with `settings: { appearance: <the same object> }`. Mention that embeds (`?embed=1`) keep the card
    layout on a transparent page, so the texture and layout show on the hosted page only.
 
-## REST scripts (fallback, and REST-only actions)
-
-Base URL `https://usero.io/api/v1`, auth `Authorization: Bearer $USERO_API_KEY`. Set `USERO_API_BASE_URL` to point at another
-deployment. Every script prints JSON on success and `Error (<code>)` plus the body on failure.
-
-| Script                                                     | Does                                                                                                    | MCP equivalent        |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------- |
-| `create-client.sh "Name" [owner/repo]`                     | Creates a client. Repo is optional and only for PR generation; see the note below.                      | `create_client`       |
-| `import-issue.sh <clientId> <issueUrl>`                    | Imports a GitHub issue as feedback. URL must match the client's repo. Idempotent. Returns `feedbackId`. | `import_github_issue` |
-| `create-pr.sh <clientId> <feedbackId> [guidance]`          | Asks Usero to open an AI PR. Returns `prId`. Asynchronous.                                              | `request_ai_pr`       |
-| `check-status.sh <clientId> <prId>`                        | PR status. Terminal: `created`, `failed`, `blocked`.                                                    | `get_pr_status`       |
-| `full-workflow.sh "Name" owner/repo <issueUrl> [guidance]` | Create client, import issue, open PR, poll until terminal (15 min cap).                                 | none                  |
-| `list-feedback.sh <clientId> [page] [limit] [environment]` | Feedback items with pagination.                                                                         | `search_feedback`     |
-| `list-forms.sh <clientId>`                                 | Forms with response counts.                                                                             | `list_forms`          |
-| `create-form.sh <clientId> <title> [description]`          | Creates an empty form. Returns `id` and `slug`. Field JSON shape: https://usero.io/docs/forms#api       | `create_form`         |
-| `get-form.sh <clientId> <formId>`                          | One form with fields, settings, response count.                                                         | `get_form`            |
-| `update-form.sh <clientId> <formId> '<json>'`              | Updates `title`, `description`, `fields`, `settings`, `published`.                                      | `update_form`         |
-| `delete-form.sh <clientId> <formId>`                       | Deletes a form and all its responses. Confirm with the user first.                                      | `delete_form`         |
-| `list-responses.sh <clientId> <formId> [page] [limit]`     | Form responses, paginated.                                                                              | `list_form_responses` |
-| `form-analytics.sh <clientId> <formId>`                    | Sessions, views, completion rate, per-field completion.                                                 | `get_form_analytics`  |
+## Clients and PRs
 
 **Creating a client with a repo fails unless the Usero GitHub App already has access to that repo**, which it never does for a
 repo created moments ago:
@@ -155,7 +122,7 @@ repo created moments ago:
 "error": "GitHub App installation does not have access to owner/repo."
 ```
 
-Drop the repo argument if the client only collects feedback. For PR generation, grant access at
+Leave out `repo` in `create_client` if the client only collects feedback. For PR generation, grant access at
 https://github.com/settings/installations and run it again, or connect GitHub later from the client's Integrations page.
 
 ### PR status values
@@ -169,7 +136,7 @@ https://github.com/settings/installations and run it again, or connect GitHub la
 | `failed`     | Error, see `errorMessage` | yes      |
 | `blocked`    | Plan limit reached        | yes      |
 
-Poll every 15 seconds. `full-workflow.sh` does this for you.
+Poll `get_pr_status` every 15 seconds until a terminal status.
 
 ## Adding the feedback widget to a project
 
@@ -197,9 +164,8 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 
 ## Rules
 
-- Never print an API key, except that the key `check_signup` returns must be written into the MCP config and `USERO_API_KEY` right
-  away (that is the one place it exists). Scripts read it from the environment; the MCP header is set by the plugin config.
-- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test`, `release_payment`, `create-pr.sh`, `delete-form.sh` and
-  `full-workflow.sh` have side effects on the user's repo, tracker or data. Say what you will do and confirm before running them,
-  unless the user already asked for exactly that action.
+- Never print, store or ask for an API key. The plugin signs in with OAuth and Claude Code holds the token; the one exception is
+  the setup snippet `check_signup` returns, which goes to the user as is.
+- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test` and `release_payment` have side effects on the user's repo,
+  tracker or data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.

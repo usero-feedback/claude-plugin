@@ -4,25 +4,11 @@ Read your user feedback inbox and clusters, file feedback, and open AI pull requ
 
 The plugin bundles two things:
 
-- The config for the **usero MCP server** at `https://usero.io/mcp` (10 tools, 2 resources, 3 prompt templates; the full list is
-  at https://usero.io/docs/mcp).
+- The config for the **usero MCP server** at `https://usero.io/mcp` (the full tool list is at https://usero.io/docs/mcp).
 - A **skill** that teaches Claude when to reach for those tools ("what are users complaining about?", "fix the top complaint",
-  "did that PR land?") and falls back to bundled REST scripts when the MCP server is not connected.
-
-## Get an API key
-
-Sign in at https://usero.io/profile and create a key under API keys. It looks like `usk_live_...` and is shown once. The key acts
-as you: the agent sees every client you are a member of and nothing else.
+  "did that PR land?").
 
 ## Install
-
-### Path 1: the plugin (MCP server + skill)
-
-Export the key in your shell so the plugin's MCP config can read it, then add the marketplace and install:
-
-```bash
-export USERO_API_KEY="usk_live_..."   # put this in ~/.zshrc or ~/.bashrc
-```
 
 Inside Claude Code:
 
@@ -38,14 +24,27 @@ claude plugin marketplace add usero-feedback/claude-plugin
 claude plugin install usero@usero
 ```
 
-Restart Claude Code, then check `/mcp` shows `usero` with its tools. Try: "list my usero clients".
+## Sign in
 
-The MCP config reads `USERO_API_KEY` from the environment (`${USERO_API_KEY}` expansion in `.mcp.json`). If it is unset, Claude
-Code warns in `/mcp` and `claude mcp list` naming the variable and every call returns 401.
+The plugin has no API key to set. It connects with OAuth: on first use Claude Code shows that `usero` needs authentication. Open
+`/mcp`, pick `usero`, choose Authenticate, and approve the connection in the browser (a new email gets an account on the way).
+Claude Code stores and refreshes the token itself, so nothing lands in your shell profile or config files. From a terminal,
+`claude mcp login plugin:usero:usero` does the same.
 
-### Path 2: just the MCP server
+Check `/mcp` shows `usero` connected with its tools, then try: "list my usero clients". The token acts as you: the agent sees
+every client you are a member of and nothing else.
 
-If you only want the tools and not the skill:
+### Upgrading from 0.11 or earlier
+
+Earlier versions read an API key from an environment variable in your shell. 0.12.0 doesn't: run `/plugin update usero@usero` (or
+`claude plugin update usero@usero`), restart, and sign in once through `/mcp` as above. You can then delete that export from your
+shell profile unless another tool uses it, and revoke the key on https://usero.io/profile. The bundled REST scripts are gone too;
+every action they covered is an MCP tool.
+
+## Just the MCP server, or a static key
+
+If you only want the tools and not the skill, or you run Claude Code headless (`claude -p`, CI) where the browser sign-in can't
+happen, add the server yourself with an API key from https://usero.io/profile (keys look like `usk_live_...` and are shown once):
 
 ```bash
 claude mcp add --transport http usero https://usero.io/mcp --header "Authorization: Bearer usk_live_..."
@@ -62,23 +61,24 @@ with the config block for your client at https://usero.io/docs/mcp.
 
 ```bash
 claude plugin validate ./plugins/usero
-USERO_API_KEY=usk_live_... claude --plugin-dir ./plugins/usero
+claude --plugin-dir ./plugins/usero
 ```
 
-Then `/mcp` should list `usero`, and `/usero:usero` invokes the skill. `/reload-plugins` picks up edits without restarting.
+Then `/mcp` should list `usero` (authenticate it there), and `/usero:usero` invokes the skill. `/reload-plugins` picks up edits
+without restarting.
 
 ## Layout
 
 ```
 plugins/usero/
-  .claude-plugin/plugin.json   name, version, homepage
-  .mcp.json                    the remote MCP server, key from $USERO_API_KEY
-  skills/usero/SKILL.md        when and how to use the tools, REST fallback
-  skills/usero/scripts/*.sh    REST scripts (curl + jq) over https://usero.io/api/v1
+  .claude-plugin/plugin.json   name, version, homepage, icon, privacy policy
+  .mcp.json                    the remote MCP server, OAuth sign-in (?auth=oauth)
+  assets/icon.png              512x512 listing icon
+  skills/usero/SKILL.md        when and how to use the tools
 ```
 
 Plugin and marketplace format: https://code.claude.com/docs/en/plugins and https://code.claude.com/docs/en/plugin-marketplaces.
-Environment variable expansion in `.mcp.json`: https://code.claude.com/docs/en/mcp#environment-variable-expansion-in-mcp-json.
+MCP OAuth in Claude Code: https://code.claude.com/docs/en/mcp#authenticate-with-remote-mcp-servers.
 
 ## Versioning
 
