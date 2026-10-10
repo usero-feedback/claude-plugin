@@ -41,7 +41,8 @@ means feedback sent without one.
 Resources you can pin instead of calling a tool: `usero://clients/{clientId}/clusters` and `usero://feedback/{id}`.
 
 Prompt templates the server provides (`clientId` optional; omitted means the key's only client, or pick one via `list_clients`):
-`triage_inbox`, `fix_top_complaint`, `write_changelog_from_feedback`.
+`get_first_feedback`, `triage_inbox`, `fix_top_complaint`, `write_changelog_from_feedback`. A new account with no feedback yet:
+`create_form` gives a public link to share, no code needed.
 
 ### Typical MCP flows
 
