@@ -70,6 +70,12 @@ When sessions land, `list_user_test_sessions` with `paymentStatus: "ready_to_pay
 `get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then `release_payment` per session,
 confirming with the user first each time (name the tester and the reward). No shell, no scripts.
 
+**"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
+optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
+the right people); Usero emails them their link. `list_referrers` and `set_referrer_disabled` manage the links. To pay bonuses,
+`list_referrals`: `review_referral` approves or rejects a flagged one (fraud flags are listed in words), `release_referral_bonus`
+marks an earned one paid, confirming with the user first (name the referrer, the person and the bonus).
+
 **"How is this form converting?"** `get_form_analytics` with the `clientId` and `formId`. Quote the completion rate and the
 per-field completions.
 
@@ -161,6 +167,7 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 ## Rules
 
 - Sign-in happens only in the browser through `/mcp`, and Claude Code holds the session. Never ask the user to paste a secret.
-- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test` and `release_payment` have side effects on the user's repo,
-  tracker or data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
+- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the person),
+  `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's repo, tracker or data. Say what you
+  will do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
