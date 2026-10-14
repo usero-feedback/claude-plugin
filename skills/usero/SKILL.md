@@ -94,6 +94,10 @@ when it last synced: `lastSyncedAt` is the run's wall clock, `lastPolledAt` is t
 last 5 runs. `sync_intercom` queues a sync now and returns at once; poll `intercom_status` until a new run appears in `syncRuns`.
 If it errors with "not connected", point the user at the client's Integrations page (OAuth connect stays in the dashboard).
 
+**"How much of my plan have I used?"** `get_usage` with the `clientId` returns the owner's plan and this month's `meters` (session
+replays, AI replay analysis, AI user tests, user tests with real people, issues, draft PRs), each with `used` and `limit`.
+`limit: null` means no limit. Amounts are per account across all of the owner's clients. Feedback is always unlimited.
+
 **"Note that moment in the recording."** `note_replay_moment` with the `clientId`, exactly one of `sessionReplayId` (from
 `get_feedback`) or `userTestSessionId` (from `list_user_test_sessions`), the `replayAtMs`, a one-line `title`, and optionally
 `description`, `severity`, `pageUrl` and the participant's verbatim `quote`. The item lands in the inbox with source `replay-note`
