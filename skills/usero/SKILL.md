@@ -57,7 +57,9 @@ rather than you.
 `create_issue` with the `feedbackId`. Omit `title` and `body` for the dashboard draft, or pass your own; `tracker` is `github`,
 `linear` or `jira` and defaults to the tracker selected in the client's settings. Reply with the identifier (`#123`, `ENG-12` or
 `PROJ-123`) and URL; `alreadyLinked: true` means it already had one and nothing new was created. If the error says no tracker is
-connected, point the user at the client's Integrations page rather than retrying.
+connected, point the user at the client's Integrations page rather than retrying. The drafted body carries a Demand section when
+the feedback's board post has 2+ votes (full on Linear, Jira and private repos, counts only on a public repo); `demand` in the
+result says whether it went in. Pass `demandDetail: "counts"` or `"none"` if the user wants less; it can never add detail.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`.
 
