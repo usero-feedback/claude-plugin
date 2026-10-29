@@ -74,9 +74,11 @@ confirming with the user first each time (name the tester and the reward). No sh
 
 **"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
 optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
-the right people); Usero emails them their link. `list_referrers` and `set_referrer_disabled` manage the links. To pay bonuses,
-`list_referrals`: `review_referral` approves or rejects a flagged one (fraud flags are listed in words), `release_referral_bonus`
-marks an earned one paid, confirming with the user first (name the referrer, the person and the bonus).
+the right people); Usero emails them their link. `referralPayoutEvery` pays bonuses in chunks ("$5 per referral, paid every 4
+referrals" is 4). `list_referrers` and `set_referrer_disabled` manage the links. To pay bonuses, `list_referrals`:
+`review_referral` approves or rejects a flagged one (fraud flags are listed in words), then `release_referral_bonus` with a
+`payoutId` from `duePayouts` marks that whole payout paid, confirming with the user first (name the referrer, the people covered
+and the amount).
 
 **"How is this form converting?"** `get_form_analytics` with the `clientId` and `formId`. Quote the completion rate and the
 per-field completions.
