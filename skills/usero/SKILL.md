@@ -61,7 +61,8 @@ connected, point the user at the client's Integrations page rather than retrying
 the feedback's board post has 2+ votes (full on Linear, Jira and private repos, counts only on a public repo); `demand` in the
 result says whether it went in. Pass `demandDetail: "counts"` or `"none"` if the user wants less; it can never add detail.
 
-**"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`.
+**"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`. Once the PR
+merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerge: true`); there is nothing to resolve by hand.
 
 **"Create an NPS survey and give me the link."** `list_clients` if needed, then `create_form` with a `scale` field (min 0, max 10,
 end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
