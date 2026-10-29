@@ -75,7 +75,8 @@ confirming with the user first each time (name the tester and the reward). No sh
 
 **"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
 optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
-the right people); Usero emails them their link. `referralPayoutEvery` pays bonuses in chunks ("$5 per referral, paid every 4
+the right people); Usero emails them their private referral page (`statusUrl`), or pass `sendInvite: false` and send
+`statusUrl` yourself. `referralPayoutEvery` pays bonuses in chunks ("$5 per referral, paid every 4
 referrals" is 4). `list_referrers` and `set_referrer_disabled` manage the links. To pay bonuses, `list_referrals`:
 `review_referral` approves or rejects a flagged one (fraud flags are listed in words), then `release_referral_bonus` with a
 `payoutId` from `duePayouts` marks that whole payout paid, confirming with the user first (name the referrer, the people covered
@@ -176,7 +177,7 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 ## Rules
 
 - Sign-in happens only in the browser through `/mcp`, and Claude Code holds the session. Never ask the user to paste a secret.
-- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the person),
+- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the person unless `sendInvite: false`),
   `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's repo, tracker or data. Say what you
   will do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
