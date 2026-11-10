@@ -2,10 +2,11 @@
 name: usero
 description:
   Work with Usero, the user feedback tool, from inside the agent. Use whenever the user mentions Usero, asks what users are saying
-  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub, Linear
-  or Jira issue created from a feedback item, wants to build or edit a survey or feedback form and get its public link, asks
-  whether Intercom or app reviews are syncing, or wants Usero to open or check an AI pull request for a feedback item (Usero
-  writes the PR server-side). The usero MCP server tools cover all of that, including GitHub issue import and form analytics.
+  or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub,
+  Linear, Jira or GitLab issue created from a feedback item, wants to build or edit a survey or feedback form and get its public
+  link, asks whether Intercom or app reviews are syncing, or wants Usero to open or check an AI pull request for a feedback item
+  (Usero writes the PR server-side). The usero MCP server tools cover all of that, including GitHub issue import and form
+  analytics.
 ---
 
 # Usero
@@ -55,17 +56,20 @@ rather than you.
 
 **"Open an issue for this."** `get_feedback` on the item (its `issues` list shows any tracker issue already linked), then
 `create_issue` with the `feedbackId`. Omit `title` and `body` for the dashboard draft, or pass your own; `tracker` is `github`,
-`linear` or `jira` and defaults to the tracker selected in the client's settings. Reply with the identifier (`#123`, `ENG-12` or
-`PROJ-123`) and URL; `alreadyLinked: true` means it already had one and nothing new was created. If the error says no tracker is
-connected, point the user at the client's Integrations page rather than retrying. The drafted body carries a Demand section when
-the feedback's board post has 2+ votes (full on Linear, Jira and private repos, counts only on a public repo); `demand` in the
+`linear`, `jira` or `gitlab` and defaults to the tracker selected in the client's settings. Reply with the identifier (`#123`,
+`ENG-12`, `PROJ-123` or `group/project#12`) and URL; `alreadyLinked: true` means it already had one and nothing new was created.
+On Linear, `customerRequest` says whether the feedback was also added to the issue as a Linear customer request (name and company,
+never the email). If the error says no tracker is connected, point the user at the client's Integrations page rather than
+retrying. The drafted body carries a Demand section when the feedback's board post has 2+ votes (full on Linear, Jira, private
+repos and private GitLab projects (internal too on self-managed GitLab), counts only on a public repo or project); `demand` in the
 result says whether it went in. Pass `demandDetail: "counts"` or `"none"` if the user wants less; it can never add detail.
 
 **"This is the same as issue #42" / "link it to ENG-12."** `link_issue` with `clientId`, `feedbackId` and `reference` (an issue
 URL, `#42`, `ENG-12` or `PROJ-45`). Run it with `dryRun: true` first and tell the user the title, state and how many other items
 already link to it. It syncs like a created issue. `addToIssue` (default true) puts the feedback on the ticket once; pass
 `resolveFeedback: true` only if the user wants the item resolved because the issue is already closed. A `warning` in the result
-means the link landed but the note on the ticket did not.
+means the link landed but the note on the ticket did not. It takes GitHub, Linear and Jira issues; a GitLab issue cannot be linked
+yet, so say so rather than guessing a reference.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`. Once the PR
 merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerge: true`); there is nothing to resolve by hand.
