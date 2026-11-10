@@ -61,6 +61,12 @@ connected, point the user at the client's Integrations page rather than retrying
 the feedback's board post has 2+ votes (full on Linear, Jira and private repos, counts only on a public repo); `demand` in the
 result says whether it went in. Pass `demandDetail: "counts"` or `"none"` if the user wants less; it can never add detail.
 
+**"This is the same as issue #42" / "link it to ENG-12."** `link_issue` with `clientId`, `feedbackId` and `reference` (an issue
+URL, `#42`, `ENG-12` or `PROJ-45`). Run it with `dryRun: true` first and tell the user the title, state and how many other items
+already link to it. It syncs like a created issue. `addToIssue` (default true) puts the feedback on the ticket once; pass
+`resolveFeedback: true` only if the user wants the item resolved because the issue is already closed. A `warning` in the result
+means the link landed but the note on the ticket did not.
+
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`. Once the PR
 merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerge: true`); there is nothing to resolve by hand.
 
@@ -104,6 +110,11 @@ If it errors with "not connected", point the user at the client's Integrations p
 **"How much of my plan have I used?"** `get_usage` with the `clientId` returns the owner's plan and this month's `meters` (session
 replays, AI replay analysis, AI user tests, user tests with real people, issues, draft PRs), each with `used` and `limit`.
 `limit: null` means no limit. Amounts are per account across all of the owner's clients. Feedback is always unlimited.
+
+**"Who is on our board?" / "Send me everything we hold on this person."** `list_board_people` pages through everyone who posted,
+voted or commented, with `canEmail` (false means they unsubscribed, true only means no opt-out is on record, it is not consent)
+and a `summary` of what is left out. `get_board_person_activity` with an `email` answers a subject access request: posts, votes
+and comments with their `state`, held and rejected included. Both need the owner or admin role; say so plainly if refused.
 
 **"Note that moment in the recording."** `note_replay_moment` with the `clientId`, exactly one of `sessionReplayId` (from
 `get_feedback`) or `userTestSessionId` (from `list_user_test_sessions`), the `replayAtMs`, a one-line `title`, and optionally
@@ -178,7 +189,8 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 ## Rules
 
 - Sign-in happens only in the browser through `/mcp`, and Claude Code holds the session. Never ask the user to paste a secret.
-- `request_ai_pr`, `create_issue`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the person unless
-  `sendInvite: false`), `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's repo, tracker or
-  data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
+- `request_ai_pr`, `create_issue`, `link_issue`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the
+  person unless `sendInvite: false`), `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's
+  repo, tracker or data. Say what you will do and confirm before running them, unless the user already asked for exactly that
+  action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
