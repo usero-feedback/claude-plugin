@@ -68,10 +68,12 @@ merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerg
 end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
 
 **"Run a paid user test round."** `list_clients` if needed, then `create_user_test` (name, target URL, task prompts, reward) and
-hand the user the `shareUrl`. To fix copy or settings later, `update_user_test` (tasks can only change before the first session).
-When sessions land, `list_user_test_sessions` with `paymentStatus: "ready_to_pay"` to find payouts waiting,
-`get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then `release_payment` per session,
-confirming with the user first each time (name the tester and the reward). No shell, no scripts.
+hand the user the `shareUrl`. To fix copy or settings later, `update_user_test` (task wording can change between rounds; the
+number and order of tasks only before the first session). When sessions land, `list_user_test_sessions` with
+`paymentStatus: "ready_to_pay"` to find payouts waiting, `get_user_test_session` on each to review the transcript excerpt,
+findings and quality flag, then `release_payment` per session, confirming with the user first each time (name the tester and the
+reward). If a session's analysis failed or a transcription fix shipped, `rerun_user_test_session_analysis` re-runs it; poll
+`get_user_test_session`. No shell, no scripts.
 
 **"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
 optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
