@@ -4,9 +4,9 @@ description:
   Work with Usero, the user feedback tool, from inside the agent. Use whenever the user mentions Usero, asks what users are saying
   or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub,
   Linear, Jira or GitLab issue created from a feedback item, wants to build or edit a survey or feedback form and get its public
-  link, asks whether Intercom or app reviews are syncing, or wants Usero to open or check an AI pull request for a feedback item
-  (Usero writes the PR server-side). The usero MCP server tools cover all of that, including GitHub issue import and form
-  analytics.
+  link, asks whether Intercom or app reviews are syncing, wants feedback marked resolved or reopened, or wants Usero to open or
+  check an AI pull request for a feedback item (Usero writes the PR server-side). The usero MCP server tools cover all of that,
+  including GitHub issue import and form analytics.
 ---
 
 # Usero
@@ -70,6 +70,14 @@ already link to it. It syncs like a created issue. `addToIssue` (default true) p
 `resolveFeedback: true` only if the user wants the item resolved because the issue is already closed. A `warning` in the result
 means the link landed but the note on the ticket did not. It takes GitHub, Linear and Jira issues; a GitLab issue cannot be linked
 yet, so say so rather than guessing a reference.
+
+**"Mark these resolved" / "close the loop on this."** `resolve_feedback` with `id`, or `ids` for up to 50, and an optional
+`message` for the person who sent it (500 characters max). It does what the dashboard's Resolve button does: linked GitHub, Linear
+and Jira issues close, and when the client emails submitters on resolve and the item has an email, the sender gets one email
+quoting the message, so write it to them in plain words. Report the per-id `status`: `already_resolved` was left as it was,
+`not_found` is a wrong id or another client's item, `forbidden` is a view-only role, `error` failed alone and can be retried.
+`reopen_feedback` with the same ids undoes it and clears the message. Only the first resolve ever emails the sender, so get the
+message right the first time. After fixing a complaint yourself, resolve its items only once the fix has shipped or the user asks.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`. Once the PR
 merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerge: true`); there is nothing to resolve by hand.
@@ -196,8 +204,8 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 ## Rules
 
 - Sign-in happens only in the browser through `/mcp`, and Claude Code holds the session. Never ask the user to paste a secret.
-- `request_ai_pr`, `create_issue`, `link_issue`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the
-  person unless `sendInvite: false`), `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's
-  repo, tracker or data. Say what you will do and confirm before running them, unless the user already asked for exactly that
-  action.
+- `request_ai_pr`, `create_issue`, `link_issue`, `resolve_feedback` (can email the sender and closes linked issues),
+  `reopen_feedback`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the person unless
+  `sendInvite: false`), `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's repo, tracker or
+  data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
