@@ -88,12 +88,15 @@ requests) and resolves by hand, for example after a deploy.
 end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
 
 **"Run a paid user test round."** `list_clients` if needed, then `create_user_test` (name, target URL, task prompts, reward) and
-hand the user the `shareUrl`. To fix copy or settings later, `update_user_test` (task wording can change between rounds; the
-number and order of tasks only before the first session). When sessions land, `list_user_test_sessions` with
-`paymentStatus: "ready_to_pay"` to find payouts waiting, `get_user_test_session` on each to review the transcript excerpt,
-findings and quality flag, then `release_payment` per session, confirming with the user first each time (name the tester and the
-reward). If a session's analysis failed or a transcription fix shipped, `rerun_user_test_session_analysis` re-runs it; poll
-`get_user_test_session`. No shell, no scripts.
+hand the user the `shareUrl`. Without a screener the link is open to anyone, no cap. To cap places ("only 10 testers"), pass
+`screenerFormId` (a published form with an email field, `create_form` makes one), `screenerMode: "auto"` and `screenerSlots: 10`:
+the first 10 qualified screener responses get a 48-hour test link, the rest are waitlisted. This works on `update_user_test` too,
+even after sessions exist; `get_user_test` shows `screener.slotsLeft`. To fix copy or settings later, `update_user_test` (task
+wording can change between rounds; the number and order of tasks only before the first session). When sessions land,
+`list_user_test_sessions` with `paymentStatus: "ready_to_pay"` to find payouts waiting, `get_user_test_session` on each to review
+the transcript excerpt, findings and quality flag, then `release_payment` per session, or `reject_session` for one that did not do
+the tasks (no charge), confirming with the user first each time (name the tester and the reward). If a session's analysis failed
+or a transcription fix shipped, `rerun_user_test_session_analysis` re-runs it; poll `get_user_test_session`. No shell, no scripts.
 
 **"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
 optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
@@ -207,7 +210,7 @@ HTML page with no build step. Prefer the npm package for anything bundled, and f
 
 - Sign-in happens only in the browser through `/mcp`, and Claude Code holds the session. Never ask the user to paste a secret.
 - `request_ai_pr`, `create_issue`, `link_issue`, `resolve_feedback` (can email the sender and closes linked issues),
-  `reopen_feedback`, `delete_form`, `delete_user_test`, `release_payment`, `add_referrer` (emails the person unless
-  `sendInvite: false`), `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's repo, tracker or
-  data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
+  `reopen_feedback`, `delete_form`, `delete_user_test`, `release_payment`, `reject_session`, `add_referrer` (emails the person
+  unless `sendInvite: false`), `set_referrer_disabled`, `review_referral` and `release_referral_bonus` change the user's repo,
+  tracker or data. Say what you will do and confirm before running them, unless the user already asked for exactly that action.
 - Quote users verbatim when summarising feedback. Paraphrase loses the signal the user came for.
