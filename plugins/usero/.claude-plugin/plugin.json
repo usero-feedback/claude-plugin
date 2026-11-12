@@ -1,6 +1,6 @@
 {
   "name": "usero",
-  "version": "0.26.0",
+  "version": "0.26.1",
   "description": "The direct line from user to engineer. Search your feedback board, clusters and survey answers from Claude, then turn them into GitHub, Linear, Jira or GitLab issues.",
   "author": {
     "name": "Usero",

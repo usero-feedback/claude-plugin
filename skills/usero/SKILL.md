@@ -80,7 +80,9 @@ quoting the message, so write it to them in plain words. Report the per-id `stat
 message right the first time. After fixing a complaint yourself, resolve its items only once the fix has shipped or the user asks.
 
 **"Did that PR land?"** `get_pr_status` with the feedback id. Terminal statuses are `created`, `failed`, `blocked`. Once the PR
-merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerge: true`); there is nothing to resolve by hand.
+merges, `merged` is true and Usero resolves the feedback itself (`resolvedByMerge: true`); there is nothing to resolve by hand. If
+`merged` is true and `feedbackResolved` is false, the client turned off **Resolve feedback when its PR merges** (Settings, Pull
+requests) and resolves by hand, for example after a deploy.
 
 **"Create an NPS survey and give me the link."** `list_clients` if needed, then `create_form` with a `scale` field (min 0, max 10,
 end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
