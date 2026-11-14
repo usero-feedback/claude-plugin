@@ -124,6 +124,11 @@ when it last synced: `lastSyncedAt` is the run's wall clock, `lastPolledAt` is t
 last 5 runs. `sync_intercom` queues a sync now and returns at once; poll `intercom_status` until a new run appears in `syncRuns`.
 If it errors with "not connected", point the user at the client's Integrations page (OAuth connect stays in the dashboard).
 
+**"Mark these posts shipped" / "move everything about exports to Planned."** `search_board_posts` for the ids, then
+`set_board_post_status` with the `clientId`, `postIds` (up to 100) and `status` by name. Voters are emailed by default; ask the
+user before a large batch, pass `comment` for a note in the email, or `notifyVoters: false` to change quietly. Report `changed`,
+`unchanged` and `notFound`.
+
 **"Is single sign-on on?"** `get_board_sso_status` with the `clientId`: `enabled`, `loginUrlSet`, `lastSignInAt` and whether a
 rotated secret still works. It never returns a secret; turning it on, rotating and the secret stay in Public Board settings.
 
