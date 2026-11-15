@@ -129,6 +129,9 @@ If it errors with "not connected", point the user at the client's Integrations p
 user before a large batch, pass `comment` for a note in the email, or `notifyVoters: false` to change quietly. Report `changed`,
 `unchanged` and `notFound`.
 
+**"What does the mockup on that post look like?"** `search_board_posts` returns each post's `images` (`url`, `alt`, first is the
+roadmap cover). Open the URL to look at it. Images are added in the dashboard only; there is no upload tool.
+
 **"Is single sign-on on?"** `get_board_sso_status` with the `clientId`: `enabled`, `loginUrlSet`, `lastSignInAt` and whether a
 rotated secret still works. It never returns a secret; turning it on, rotating and the secret stay in Public Board settings.
 
