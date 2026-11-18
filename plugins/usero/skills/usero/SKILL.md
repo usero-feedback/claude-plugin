@@ -98,6 +98,13 @@ the transcript excerpt, findings and quality flag, then `release_payment` per se
 the tasks (no charge), confirming with the user first each time (name the tester and the reward). If a session's analysis failed
 or a transcription fix shipped, `rerun_user_test_session_analysis` re-runs it; poll `get_user_test_session`. No shell, no scripts.
 
+**"Transcribe and analyse this interview / test video."** `start_research_upload` with the `clientId`, `fileName`, `mimeType` and
+`fileSize` in bytes, then PUT the file to `upload.url` with `upload.headers`
+(`curl -X PUT -H "Content-Type: video/mp4" --upload-file <path> "<url>"`; never pass the bytes through a tool call). After a 200,
+`finalise_research_upload` with the `assetId` (add `durationSeconds` from ffprobe if you have it). Poll `get_research_asset` every
+30 seconds until `status` is `completed` or `failed`, then quote the transcript and insights verbatim. Max 2 GB and 60 minutes.
+`list_research_assets` lists past uploads.
+
 **"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
 optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
 the right people); Usero emails them their private referral page (`statusUrl`), or pass `sendInvite: false` and send `statusUrl`
