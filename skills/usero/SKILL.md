@@ -97,6 +97,8 @@ wording can change between rounds; the number and order of tasks only before the
 the transcript excerpt, findings and quality flag, then `release_payment` per session, or `reject_session` for one that did not do
 the tasks (no charge), confirming with the user first each time (name the tester and the reward). If a session's analysis failed
 or a transcription fix shipped, `rerun_user_test_session_analysis` re-runs it; poll `get_user_test_session`. No shell, no scripts.
+Sessions start without a tester name; Usero fills it when the tester says it on the recording (`testerNameSource: "recording"`).
+To set or fix one, `update_user_test_session` with `testerName` (`""` clears it); a typed name is never overwritten.
 
 **"Transcribe and analyse this interview / test video."** `start_research_upload` with the `clientId`, `fileName`, `mimeType` and
 `fileSize` in bytes, then PUT the file to `upload.url` with `upload.headers`
