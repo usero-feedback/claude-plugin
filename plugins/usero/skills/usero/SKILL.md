@@ -104,8 +104,8 @@ To set or fix one, `update_user_test_session` with `testerName` (`""` clears it)
 `fileSize` in bytes, then PUT the file to `upload.url` with `upload.headers`
 (`curl -X PUT -H "Content-Type: video/mp4" --upload-file <path> "<url>"`; never pass the bytes through a tool call). After a 200,
 `finalise_research_upload` with the `assetId` (add `durationSeconds` from ffprobe if you have it). Poll `get_research_asset` every
-30 seconds until `status` is `completed` or `failed`, then quote the transcript and insights verbatim. Max 2 GB and 60 minutes.
-`list_research_assets` lists past uploads.
+30 seconds until `status` is `completed` or `failed`, then quote the transcript and findings (the `insights` field) verbatim. Max
+2 GB and 60 minutes. `list_research_assets` lists past uploads.
 
 **"Let people refer testers."** `update_user_test` (or `create_user_test`) with `referralBonusDollars` (at most the reward) and
 optionally `referralCapPerReferrer`, then `add_referrer` for each person who can send testers (a past tester or anyone who knows
