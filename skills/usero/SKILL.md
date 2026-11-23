@@ -90,18 +90,21 @@ requests) and resolves by hand, for example after a deploy.
 **"Create an NPS survey and give me the link."** `list_clients` if needed, then `create_form` with a `scale` field (min 0, max 10,
 end labels) plus a `textarea` follow-up and `settings: { surveyMetric: "nps" }`. Reply with `publicUrl`. No shell, no scripts.
 
-**"Run a paid user test round."** `list_clients` if needed, then `create_user_test` (name, target URL, task prompts, reward) and
-hand the user the `shareUrl`. Without a screener the link is open to anyone, no cap. To cap places ("only 10 testers"), pass
-`screenerFormId` (a published form with an email field, `create_form` makes one), `screenerMode: "auto"` and `screenerSlots: 10`:
-the first 10 qualified screener responses get a 48-hour test link, the rest are waitlisted. This works on `update_user_test` too,
-even after sessions exist; `get_user_test` shows `screener.slotsLeft`. To fix copy or settings later, `update_user_test` (task
-wording can change between rounds; the number and order of tasks only before the first session). When sessions land,
-`list_user_test_sessions` with `paymentStatus: "ready_to_pay"` to find payouts waiting, `get_user_test_session` on each to review
-the transcript excerpt, findings and quality flag, then `release_payment` per session, or `reject_session` for one that did not do
-the tasks (no charge), confirming with the user first each time (name the tester and the reward). If a session's analysis failed
-or a transcription fix shipped, `rerun_user_test_session_analysis` re-runs it; poll `get_user_test_session`. No shell, no scripts.
-Sessions start without a tester name; Usero fills it when the tester says it on the recording (`testerNameSource: "recording"`).
-To set or fix one, `update_user_test_session` with `testerName` (`""` clears it); a typed name is never overwritten.
+**"Run a paid user test round."** `list_clients` if needed, then `create_user_test` (name, target URL, task prompts, reward).
+Before handing over the `shareUrl`, check that the target site's Usero widget registers `userTest()` from
+`@usero/sdk/plugins/user-test` (React: `plugins={[sessionReplay(), userTest()]}`) and add it if missing: without it the tester
+lands on the site, nothing records, and the session closes empty. Then hand the user the `shareUrl`. Without a screener the link
+is open to anyone, no cap. To cap places ("only 10 testers"), pass `screenerFormId` (a published form with an email field,
+`create_form` makes one), `screenerMode: "auto"` and `screenerSlots: 10`: the first 10 qualified screener responses get a 48-hour
+test link, the rest are waitlisted. This works on `update_user_test` too, even after sessions exist; `get_user_test` shows
+`screener.slotsLeft`. To fix copy or settings later, `update_user_test` (task wording can change between rounds; the number and
+order of tasks only before the first session). When sessions land, `list_user_test_sessions` with `paymentStatus: "ready_to_pay"`
+to find payouts waiting, `get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then
+`release_payment` per session, or `reject_session` for one that did not do the tasks (no charge), confirming with the user first
+each time (name the tester and the reward). If a session's analysis failed or a transcription fix shipped,
+`rerun_user_test_session_analysis` re-runs it; poll `get_user_test_session`. No shell, no scripts. Sessions start without a tester
+name; Usero fills it when the tester says it on the recording (`testerNameSource: "recording"`). To set or fix one,
+`update_user_test_session` with `testerName` (`""` clears it); a typed name is never overwritten.
 
 **"Transcribe and analyse this interview / test video."** `start_research_upload` with the `clientId`, `fileName`, `mimeType` and
 `fileSize` in bytes, then PUT the file to `upload.url` with `upload.headers`
