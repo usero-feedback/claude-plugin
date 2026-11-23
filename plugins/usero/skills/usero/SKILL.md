@@ -5,8 +5,9 @@ description:
   or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub,
   Linear, Jira or GitLab issue, a Shortcut story or a Trello card created from a feedback item, wants to build or edit a survey or
   feedback form and get its public link, asks whether Intercom or app reviews are syncing, wants feedback marked resolved or
-  reopened, or wants Usero to open or check an AI pull request for a feedback item (Usero writes the PR server-side). The usero
-  MCP server tools cover all of that, including GitHub issue import and form analytics.
+  reopened, wants Usero events sent to n8n, Make, Zapier or a webhook URL, or wants Usero to open or check an AI pull request for
+  a feedback item (Usero writes the PR server-side). The usero MCP server tools cover all of that, including GitHub issue import
+  and form analytics.
 ---
 
 # Usero
@@ -175,6 +176,16 @@ End by telling the user which client was created and whether GitHub is connected
    Give the user the `previewUrl` and say it lasts one hour, is not saved, and cannot be submitted.
 4. On approval, `update_form` with `settings: { appearance: <the same object> }`. Mention that embeds (`?embed=1`) keep the card
    layout on a transparent page, so the texture and layout show on the hosted page only.
+
+**Send Usero events to n8n, Make, Zapier or their own service:**
+
+1. `create_webhook` with the receiver's https URL (events default to `["*"]`, every event including new ones). Give the user the
+   `secret` straight away and say it is shown once; their receiver verifies the `webhook-signature` header with any Standard
+   Webhooks library (`standardwebhooks`, Svix).
+2. `send_test_webhook` (optionally `eventType: "feedback.created"` or another event for a realistic sample) and report the status
+   code and response. A non-2xx answer is the receiver's problem to fix, not a Usero error.
+3. `list_webhooks` shows paused webhooks and how many events they hold; `update_webhook` with `enabled: true` resumes one and
+   sends the held events oldest first.
 
 ## Clients and PRs
 
