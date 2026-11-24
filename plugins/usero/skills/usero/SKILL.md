@@ -147,6 +147,11 @@ user before a large batch, pass `comment` for a note in the email, or `notifyVot
 **"What does the mockup on that post look like?"** `search_board_posts` returns each post's `images` (`url`, `alt`, first is the
 roadmap cover). Open the URL to look at it. Images are added in the dashboard only; there is no upload tool.
 
+**"Make our board match our brand."** `set_board_theme` with the `clientId`, `brandColor` (the brand's 6-digit hex, from their
+site or logo), optionally `brandColorDark` and a `font` (`serif`, `rounded`, `humanist`, `geometric`, `system`, `mono`). Tell the
+user what `brand.light` / `brand.dark` report: a `darkened` or `lightened` text or button colour means Usero adjusted it to stay
+readable, and a `buttonOnPage` under 1.5 means the button blends into that theme, so suggest a `brandColorDark`.
+
 **"Is single sign-on on?"** `get_board_sso_status` with the `clientId`: `enabled`, `loginUrlSet`, `lastSignInAt` and whether a
 rotated secret still works. It never returns a secret; turning it on, rotating and the secret stay in Public Board settings.
 
