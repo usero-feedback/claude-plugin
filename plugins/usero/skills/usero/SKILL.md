@@ -5,9 +5,9 @@ description:
   or complaining about, wants to see feedback, feedback clusters or form responses, wants to file feedback, wants a GitHub,
   Linear, Jira or GitLab issue, a Shortcut story or a Trello card created from a feedback item, wants to build or edit a survey or
   feedback form and get its public link, asks whether Intercom or app reviews are syncing, wants feedback marked resolved or
-  reopened, wants Usero events sent to n8n, Make, Zapier or a webhook URL, or wants Usero to open or check an AI pull request for
-  a feedback item (Usero writes the PR server-side). The usero MCP server tools cover all of that, including GitHub issue import
-  and form analytics.
+  reopened, wants Usero events sent to n8n, Make, Zapier, PostHog or a webhook URL, or wants Usero to open or check an AI pull
+  request for a feedback item (Usero writes the PR server-side). The usero MCP server tools cover all of that, including GitHub
+  issue import and form analytics.
 ---
 
 # Usero
@@ -194,6 +194,12 @@ End by telling the user which client was created and whether GitHub is connected
    code and response. A non-2xx answer is the receiver's problem to fix, not a Usero error.
 3. `list_webhooks` shows paused webhooks and how many events they hold; `update_webhook` with `enabled: true` resumes one and
    sends the held events oldest first.
+
+**Send Usero events to PostHog:** `set_posthog` with `action: "connect"`, the `phc_` project API key from PostHog Project settings
+and `region` (`us`, `eu`, or `custom` with `host` for self-hosted PostHog or a reverse proxy), then `send_test_posthog_event` and
+report the status (a 401 means the key is wrong). Events land on the person the app identifies, so tell the user to pass the same
+user id to Usero `identify()` as to `posthog.identify()`; people without one are matched by email. `get_posthog` shows status and
+recent deliveries.
 
 ## Clients and PRs
 
