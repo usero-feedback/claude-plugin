@@ -152,8 +152,10 @@ site or logo), optionally `brandColorDark` and a `font` (`serif`, `rounded`, `hu
 user what `brand.light` / `brand.dark` report: a `darkened` or `lightened` text or button colour means Usero adjusted it to stay
 readable, and a `buttonOnPage` under 1.5 means the button blends into that theme, so suggest a `brandColorDark`.
 
-**"Is single sign-on on?"** `get_board_sso_status` with the `clientId`: `enabled`, `loginUrlSet`, `lastSignInAt` and whether a
-rotated secret still works. It never returns a secret; turning it on, rotating and the secret stay in Public Board settings.
+**"Is single sign-on on?"** `get_board_sso_status` with the `clientId`: `enabled`, `loginUrlSet`, `lastSignInAt`, whether a
+rotated secret still works and `access` (`anyone`, or `signed_in` for a private board). It never returns a secret; turning it on,
+rotating and the secret stay in Public Board settings. To make the board private, `update_board_settings` with
+`access: "signed_in"` (needs single sign-on on with a login URL).
 
 **"How much of my plan have I used?"** `get_usage` with the `clientId` returns the owner's plan and this month's `meters` (session
 replays, AI replay analysis, AI user tests, user tests with real people, issues, draft PRs), each with `used` and `limit`.
