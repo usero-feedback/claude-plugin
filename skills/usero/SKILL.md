@@ -6,8 +6,8 @@ description:
   Linear, Jira or GitLab issue, a Shortcut story or a Trello card created from a feedback item, wants to build or edit a survey or
   feedback form and get its public link, asks whether Intercom or app reviews are syncing, wants feedback marked resolved or
   reopened, wants Usero events sent to n8n, Make, Zapier, PostHog or a webhook URL, or wants Usero to open or check an AI pull
-  request for a feedback item (Usero writes the PR server-side). The usero MCP server tools cover all of that, including GitHub
-  issue import and form analytics.
+  request for a feedback item (Usero writes the PR server-side), or wants to start or schedule an AI user test. The usero MCP
+  server tools cover all of that, including GitHub issue import and form analytics.
 ---
 
 # Usero
@@ -99,7 +99,8 @@ is open to anyone, no cap. To cap places ("only 10 testers"), pass `screenerForm
 test link, the rest are waitlisted. This works on `update_user_test` too, even after sessions exist; `get_user_test` shows
 `screener.slotsLeft`. To fix copy or settings later, `update_user_test` (task wording can change between rounds; the number and
 order of tasks only before the first session). When sessions land, `list_user_test_sessions` with `paymentStatus: "ready_to_pay"`
-to find payouts waiting, `get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then
+to find payouts waiting (a session under half the test's minimum length is held as `incomplete` with `short_recording` instead,
+still payable by hand), `get_user_test_session` on each to review the transcript excerpt, findings and quality flag, then
 `release_payment` per session, or `reject_session` for one that did not do the tasks (no charge), confirming with the user first
 each time (name the tester and the reward). If a session's analysis failed or a transcription fix shipped,
 `rerun_user_test_session_analysis` re-runs it; poll `get_user_test_session`. No shell, no scripts. Sessions start without a tester
@@ -125,8 +126,20 @@ approves or rejects a flagged one (fraud flags are listed in words), then `relea
 per-field completions.
 
 **"What did the AI user tests find?"** `list_ai_user_test_runs` for the verdicts (`clean` is the only pass), then
-`get_ai_user_test_run` on the interesting runs to read the findings. Starting a run or changing its schedule stays in the
-dashboard.
+`get_ai_user_test_run` on the interesting runs to read the findings.
+
+**"Run an AI user test of signup on staging."** `start_ai_user_test_run` with `name`, `targetUrl` (staging, never production),
+`taskPrompt` written as the outcome ("Sign up and create your first project", not the clicks), optional `mode` (`explore` default
+or `script`) and `access` (`{ "mode": "none" }`, `password` with a test account, `session` with a Playwright `storageState`, or
+`inbox` to let it sign itself up). Then poll `get_ai_user_test_run` every 10 seconds or so until `verdict` is not `in-flight`.
+Each run counts against the owner's monthly AI user tests; at the limit the error says when it resets, so pass that on.
+
+**"Test checkout every night at 2am."** `create_ai_user_test_schedule` with the same fields plus `hourOfDay` and `timezone` (IANA,
+ask the user's zone) and `accessMode` (`none`, `session` with `storageState`, or `inbox`; schedules never take a password). Up to
+3 run at once per client. `list_ai_user_test_schedules` shows each one's next run and why it is paused;
+`update_ai_user_test_schedule` changes only the fields you pass (a fresh `storageState` resumes one paused for an expired
+session); `set_ai_user_test_schedule_paused` pauses or resumes; `delete_ai_user_test_schedule` removes one, confirming with the
+user first.
 
 **"Sync my App Store / Play reviews."** `connect_app_reviews` with the `clientId` plus `appleAppId` (numeric, optional
 `appleCountry`, default us) or `playPackageName` (at least one store id required), then poll `app_reviews_status` until the phase
